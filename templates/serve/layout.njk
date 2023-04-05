@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Component Test</title>
+
+    <script id="live-reloader" type="module">
+      const socket = new WebSocket(`ws://${location.host}/`);
+      socket.addEventListener('message', (event) => {
+        if (event.data == "connected") {
+          console.log('Live reload connected.');
+        }
+        if (event.data == "reload") {
+          socket.close();
+          location.reload();
+        }
+        return false;
+      });
+    </script>
+
+    <link rel="stylesheet" href="/_templates/base-css.scss" />
+
+    {% for includeTag in includeTags %}
+      {{ includeTag | safe }}
+    {% endfor %}
+  </head>
+  <body>
+    {% include content %}
+  </body>
+</html>
