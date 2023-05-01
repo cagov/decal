@@ -1,6 +1,4 @@
-#! /usr/bin/env node
-
-import yargs, { Arguments, Argv } from "yargs";
+import yargs, { Argv } from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { Config } from "./config.js";

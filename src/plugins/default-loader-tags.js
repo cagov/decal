@@ -1,11 +1,11 @@
 export default (decalConfig) => {
   decalConfig.addLoaderTag(
     "css-tag",
-    (input) => `<link rel="stylesheet" href="_src/${input}" />`
+    (input) => `<link rel="stylesheet" href="src/${input}" />`
   );
 
   decalConfig.addLoaderTag(
     "module-tag",
-    (input) => `<script type="module" src="_src/${input}"></script>`
+    (input) => `<script type="module" src="src/${input}"></script>`
   );
 };

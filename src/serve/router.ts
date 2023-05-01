@@ -8,7 +8,7 @@ import { Loader } from "../loader.js";
 import { FileReadError } from "../errors.js";
 
 export const createRouter = (config: Config) => {
-  const { dirs, collections, loaders, processors } = config;
+  const { dirs, collections, loaders } = config;
 
   const router = new Router();
 
@@ -45,22 +45,6 @@ export const createRouter = (config: Config) => {
     Then the filePath is passed to the next Koa middleware for processing.
   */
 
-  // Collect a list of special folders used within components.
-  const magicFolders = ["src", "dist"];
-
-  // Set up the router to handle special folders for the component.
-  // This will allow us to use the component's 'src' folder, etc.
-  magicFolders.forEach((folder) => {
-    // Note the underscores appended to the routes.
-    const magicRoute = `/(.*)/_${folder}/(.*)`;
-
-    router.get(magicRoute, async (ctx, next) => {
-      const magicPath = ctx.path.replace(`/_${folder}/`, `/${folder}/`);
-      ctx.state.filePath = `${dirs.target}${magicPath}`;
-      await next();
-    });
-  });
-
   // Collect routes for this tool's template folder.
   const templateRoutes = ["/_templates/(.*)", "/(.*)/_templates/(.*)"];
 
@@ -75,21 +59,42 @@ export const createRouter = (config: Config) => {
     await next();
   });
 
-  // Set up the router to load files from each "examples" folder.
+  // Set up the router to load files from each component.
   collections.forEach((collection) => {
     collection.components.forEach((component) => {
-      const exampleDir = `${component.dir}/examples`;
-      const exampleRoute = `${component.route}/(.*)`;
+      const componentSubFolderRoute = `${component.route}/(.*)/(.*)`;
 
-      router.get(exampleRoute, async (ctx, next) => {
+      // For any component subfolders, like src, just serve the request.
+      router.get(componentSubFolderRoute, async (ctx, next) => {
+        if (!ctx.state.filePath) {
+          ctx.state.filePath = `${dirs.target}${ctx.path}`;
+        }
+
+        await next();
+      });
+
+      const componentExampleDir = `${component.dir}/examples`;
+      const componentExampleRoute = `${component.route}/(.*)`;
+
+      // For component root requests, serve from the examples folder.
+      router.get(componentExampleRoute, async (ctx, next) => {
         if (!ctx.state.filePath) {
           const exampleFile = ctx.path.replace(/^.+\//, "");
-          ctx.state.filePath = `${exampleDir}/${exampleFile}`;
+          ctx.state.filePath = `${componentExampleDir}/${exampleFile}`;
         }
 
         await next();
       });
     });
+  });
+
+  // Handle all other non-special filePaths here.
+  router.get("/(.*)", async (ctx, next) => {
+    if (!ctx.state.filePath) {
+      ctx.state.filePath = `${dirs.target}${ctx.path}`;
+    }
+
+    await next();
   });
 
   /*
