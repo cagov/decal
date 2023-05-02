@@ -24,8 +24,8 @@ export default (decalConfig) => {
       };
 
       await Promise.all([
-        renderToFile("react-example.html.njk", `${dir}/examples`, params),
-        renderToFile("react-example.jsx.njk", `${dir}/examples`, params),
+        renderToFile("react-example.html.njk", `${dir}/demo`, params),
+        renderToFile("react-example.jsx.njk", `${dir}/demo`, params),
         renderToFile("react.jsx.njk", `${dir}/src`, params),
       ]);
     }

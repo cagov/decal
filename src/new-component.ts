@@ -55,9 +55,7 @@ export const newComponent = async (config: Config) => {
 
   await fs
     .mkdir(dir)
-    .then(() =>
-      Promise.all([fs.mkdir(`${dir}/src`), fs.mkdir(`${dir}/examples`)])
-    );
+    .then(() => Promise.all([fs.mkdir(`${dir}/src`), fs.mkdir(`${dir}/demo`)]));
 
   const scaffoldings: Promise<void>[] = [];
 

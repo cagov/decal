@@ -43,7 +43,7 @@ export const createHtmlHandler = (config: Config) => {
         renderAttributes.content = nunjucks.compile(str);
       });
 
-    const componentPathIndex = filePath.indexOf("/examples");
+    const componentPathIndex = filePath.indexOf("/demo");
     const componentPath = filePath.substring(0, componentPathIndex);
 
     const includers: Promise<void>[] = [];

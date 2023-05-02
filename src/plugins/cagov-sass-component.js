@@ -59,9 +59,9 @@ export default (decalConfig) => {
       await Promise.all([
         fs.copyFile(
           `${templatesDir}/hard-hat-bear.jpg`,
-          `${dir}/examples/hard-hat-bear.jpg`
+          `${dir}/demo/hard-hat-bear.jpg`
         ),
-        renderToFile("index.html.njk", `${dir}/examples`, params),
+        renderToFile("index.html.njk", `${dir}/demo`, params),
         renderToFile("index.scss.njk", `${dir}/src`, params),
       ]);
     }

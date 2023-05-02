@@ -15,10 +15,8 @@ export const createDigestHandler = (config: Config) => {
     const _collections = collections.map((collection) => {
       const _components = collection.components.map((component) => {
         const files = glob
-          .sync(`${component.dir}/examples/*.html`)
-          .map((filePath) =>
-            filePath.replace(`${component.dir}/examples/`, "")
-          );
+          .sync(`${component.dir}/demo/*.html`)
+          .map((filePath) => filePath.replace(`${component.dir}/demo/`, ""));
 
         return {
           ...component,

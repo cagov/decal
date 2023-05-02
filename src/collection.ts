@@ -11,6 +11,7 @@ export type Component = {
 export type CollectionOptions = {
   loaderIDs?: string[];
   scaffoldIDs?: string[];
+  tagIDs?: string[];
 };
 
 export class Collection {

@@ -27,7 +27,7 @@ export const serve = (config: Config) => {
       app.use(
         koaMount(
           component.route,
-          serveStatic(`${component.dir}/examples`, { defer: true })
+          serveStatic(`${component.dir}/demo`, { defer: true })
         )
       );
     });

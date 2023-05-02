@@ -73,10 +73,10 @@ export const createRouter = (config: Config) => {
         await next();
       });
 
-      const componentExampleDir = `${component.dir}/examples`;
+      const componentExampleDir = `${component.dir}/demo`;
       const componentExampleRoute = `${component.route}/(.*)`;
 
-      // For component root requests, serve from the examples folder.
+      // For component root requests, serve from the demo folder.
       router.get(componentExampleRoute, async (ctx, next) => {
         if (!ctx.state.filePath) {
           const exampleFile = ctx.path.replace(/^.+\//, "");
