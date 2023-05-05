@@ -3,7 +3,8 @@ import * as url from "url";
 import { promises as fs } from "fs";
 import { Arguments } from "yargs";
 import { Collection, CollectionOptions } from "./collection.js";
-import { Loader, LoaderTag, LoaderOptions } from "./loader.js";
+import { Loader, LoaderOptions } from "./loader.js";
+import { Include, IncludeTag } from "./include.js";
 import defaultProjectConfig from "./plugins/default-project.js";
 
 /** Supplements the yargs.Arguments type with our expected additions. */
@@ -67,8 +68,8 @@ export class Config {
   /** Loaders define how different file types should be processed. */
   loaders: Map<string, Loader>;
 
-  /** LoaderTags help serve mode include assets for preview. */
-  loaderTags: Map<string, LoaderTag>;
+  /** Includes help serve mode include assets for preview. */
+  includes: Map<string, Include>;
 
   /** Processors transform or transport files from one format to another. */
   processors: Map<string, Processor>;
@@ -85,7 +86,7 @@ export class Config {
 
     this.collections = [];
     this.loaders = new Map();
-    this.loaderTags = new Map();
+    this.includes = new Map();
     this.processors = new Map();
     this.scaffolds = new Map();
 
@@ -144,8 +145,9 @@ export class Config {
     if (loader) this.loaders.set(id, loader);
   }
 
-  addLoaderTag(id: string, loaderTag: LoaderTag) {
-    this.loaderTags.set(id, loaderTag);
+  addInclude(id: string, includeTag: IncludeTag) {
+    const include = new Include(this, id, includeTag);
+    this.includes.set(id, include);
   }
 
   addScaffold(id: string, scaffold: Scaffold) {

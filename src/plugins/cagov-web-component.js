@@ -14,14 +14,14 @@ export default (decalConfig) => {
     name: "JavaScript via esbuild",
     processorID: "esbuild",
     entryPoints: ["index.js"],
-    tagID: "module-tag",
+    includeID: "module-tag",
   });
 
   decalConfig.addLoader("plain-css-loader", {
     name: "Plain CSS",
     processorID: "passthrough",
     entryPoints: ["index.css"],
-    tagID: "css-tag",
+    includeID: "css-tag",
   });
 
   decalConfig.addProcessor("esbuild", (filePath) =>

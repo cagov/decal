@@ -1,6 +1,7 @@
 import glob from "glob";
 import { Config, Scaffold } from "./config.js";
 import { Loader } from "./loader.js";
+import { Include } from "./include.js";
 
 export type Component = {
   name: string;
@@ -11,7 +12,7 @@ export type Component = {
 export type CollectionOptions = {
   loaderIDs?: string[];
   scaffoldIDs?: string[];
-  tagIDs?: string[];
+  includeIDs?: string[];
 };
 
 export class Collection {
@@ -20,10 +21,14 @@ export class Collection {
   dir: string;
   loaderIDs: string[];
   scaffoldIDs: string[];
+  includeIDs: string[];
 
   constructor(config: Config, name: string, options: CollectionOptions = {}) {
-    const { loaderIDs: loaders = ["*"], scaffoldIDs: scaffolds = ["*"] } =
-      options;
+    const {
+      loaderIDs: loaders = ["*"],
+      scaffoldIDs: scaffolds = ["*"],
+      includeIDs: includeIDs = [],
+    } = options;
 
     const { dirs } = config;
 
@@ -31,6 +36,7 @@ export class Collection {
     this.name = name;
     this.loaderIDs = loaders;
     this.scaffoldIDs = scaffolds;
+    this.includeIDs = includeIDs;
 
     this.dir = `${dirs.target}/${name}`;
   }
@@ -72,5 +78,15 @@ export class Collection {
         return bucket;
       }, <Loader[]>[]);
     }
+  }
+
+  get includes() {
+    return this.includeIDs.reduce((bucket, tagID) => {
+      const include = this.config.includes.get(tagID);
+      if (include && typeof include.tag == "string") {
+        bucket.push(include);
+      }
+      return bucket;
+    }, <Include[]>[]);
   }
 }

@@ -11,7 +11,7 @@ type LoaderCoreOptions = {
   name: string;
   processorID: string;
   entryPoints: string[];
-  tagID?: string;
+  includeID?: string;
 };
 
 export type LoaderOptions = LoaderCoreOptions &
@@ -20,14 +20,12 @@ export type LoaderOptions = LoaderCoreOptions &
     dist?: FileTypeOptions;
   };
 
-export type LoaderTag = (input: string) => string;
-
 export class Loader {
   config: Config;
   id: string;
   name: string;
   processorID: string;
-  tagID: string;
+  includeID: string;
   entryPoints: string[];
   src: Required<FileTypeOptions>;
   dist: Required<FileTypeOptions>;
@@ -39,7 +37,7 @@ export class Loader {
     const {
       name,
       processorID,
-      tagID = "",
+      includeID = "",
       entryPoints,
       extname,
       mimeType,
@@ -50,7 +48,7 @@ export class Loader {
     this.name = name;
     this.processorID = processorID;
     this.entryPoints = entryPoints;
-    this.tagID = tagID;
+    this.includeID = includeID;
 
     const srcExtname =
       src && src.extname
@@ -116,6 +114,6 @@ export class Loader {
   }
 
   get tag() {
-    return this.config.loaderTags.get(this.tagID);
+    return this.config.includes.get(this.includeID);
   }
 }

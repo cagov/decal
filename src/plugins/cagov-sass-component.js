@@ -16,7 +16,7 @@ export default (decalConfig) => {
     name: "CSS via Sass",
     processorID: "sass",
     entryPoints: ["index.scss"],
-    tagID: "css-tag",
+    includeID: "css-tag",
     src: { extname: ".scss" },
     dist: { extname: ".css" },
   });
