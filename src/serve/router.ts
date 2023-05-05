@@ -45,20 +45,6 @@ export const createRouter = (config: Config) => {
     Then the filePath is passed to the next Koa middleware for processing.
   */
 
-  // Collect routes for this tool's template folder.
-  const templateRoutes = ["/_templates/(.*)", "/(.*)/_templates/(.*)"];
-
-  // Set up the router to load internal templates from this tool.
-  // This allows components to load files from the "templates" folder here.
-  router.get(templateRoutes, async (ctx, next) => {
-    const indexAfterTemplates = ctx.path.indexOf("_templates/") + 11;
-    const templateFile = ctx.path.substring(indexAfterTemplates);
-
-    ctx.state.filePath = `${dirs.templates}/serve/${templateFile}`;
-
-    await next();
-  });
-
   // Set up the router to load files from each component.
   collections.forEach((collection) => {
     collection.components.forEach((component) => {

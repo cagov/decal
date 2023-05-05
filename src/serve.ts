@@ -17,6 +17,8 @@ export const serve = (config: Config) => {
   const watcher = createWatcher(config);
   app.ws.use(watcher);
 
+  app.use(koaMount("/", serveStatic(dirs.target, { defer: true })));
+
   // This is where Base CSS expects to find fonts.
   // Can't be helped here, it's hard-coded in the Design System.
   const fontsDir = `${dirs.templates}/fonts`;

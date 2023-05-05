@@ -11,6 +11,6 @@ export default (decalConfig) => {
 
   decalConfig.addInclude(
     "base-css",
-    `<link rel="stylesheet" href="/_templates/base-css.scss" />`
+    `<link rel="stylesheet" href="/assets/base-css.scss" />`
   );
 };
