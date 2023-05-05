@@ -83,7 +83,7 @@ export class Collection {
   get includes() {
     return this.includeIDs.reduce((bucket, tagID) => {
       const include = this.config.includes.get(tagID);
-      if (include && typeof include.tag == "string") {
+      if (include) {
         bucket.push(include);
       }
       return bucket;
