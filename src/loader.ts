@@ -113,7 +113,7 @@ export class Loader {
     return this.config.processors.get(this.processorID);
   }
 
-  get tag() {
+  get include() {
     return this.config.includes.get(this.includeID);
   }
 }

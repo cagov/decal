@@ -3,7 +3,6 @@ import { promises as fs } from "fs";
 import { Config } from "../config.js";
 import { DefaultContext } from "koa";
 import { getEnvironment } from "../nunjucks.js";
-import { Collection } from "../collection.js";
 
 type RenderAttributes = {
   content?: Template;
@@ -66,7 +65,7 @@ export const createHtmlHandler = (config: Config) => {
 
       collection.loaders.forEach((loader) => {
         const processor = loader.processor;
-        const include = loader.tag;
+        const include = loader.include;
 
         if (processor && include) {
           loader.entryPoints.forEach((entryPoint) => {

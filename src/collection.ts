@@ -27,7 +27,7 @@ export class Collection {
     const {
       loaderIDs: loaders = ["*"],
       scaffoldIDs: scaffolds = ["*"],
-      includeIDs: includeIDs = [],
+      includeIDs: includeIDs = ["*"],
     } = options;
 
     const { dirs } = config;
@@ -81,12 +81,16 @@ export class Collection {
   }
 
   get includes() {
-    return this.includeIDs.reduce((bucket, tagID) => {
-      const include = this.config.includes.get(tagID);
-      if (include) {
-        bucket.push(include);
-      }
-      return bucket;
-    }, <Include[]>[]);
+    if (this.includeIDs.includes("*")) {
+      return Array.from(this.config.includes.values());
+    } else {
+      return this.includeIDs.reduce((bucket, tagID) => {
+        const include = this.config.includes.get(tagID);
+        if (include) {
+          bucket.push(include);
+        }
+        return bucket;
+      }, <Include[]>[]);
+    }
   }
 }
