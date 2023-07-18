@@ -5,22 +5,22 @@
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Components Digest</title>
-    <link id="template-base-css" rel="stylesheet" href="/_templates/base-css.scss"/>
+    <link id="template-base-css" rel="stylesheet" href="/assets/base-css.scss"/>
   </head>
   <body>
     <main style="margin: 2rem;">
       <h1>The Digest</h1>
-      {% for collection in _collections %}
+      {% for collection in collections %}
         <h2>{{ collection.name }}</h2>
-        {% for component in collection._components %}
+        {% for component in collection.components %}
           <h3>{{ component.name }}</h3>
           {% for file in component.files %}
             <p>
               <a href="{{ component.route }}/{{ file }}">{{ file }}</a>
               : {% set pipe = joiner("|") %}
-              {% for param in queryParams %}
+              {% for param in collection.queryParams %}
                 {{ pipe() }}
-                <a href="{{ component.route }}/{{ file }}?{{ param }}">{{ param }}</a>
+                <a href="{{ component.route }}/{{ file }}?{{ param.key }}">No {{ param.name }}</a>
               {% endfor %}
             </p>
           {% endfor %}

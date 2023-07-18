@@ -2,7 +2,7 @@ import chokidar from "chokidar";
 import chalk from "chalk";
 import events from "events";
 import { DefaultContext } from "koa";
-import { Config } from "../config.js";
+import { Config } from "../config";
 
 /**
  * This is the watcher. It watches the component's files for changes.

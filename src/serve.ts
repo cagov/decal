@@ -7,8 +7,8 @@ import { createRouter } from "./serve/router.js";
 import { createWatcher } from "./serve/watcher.js";
 import { Config } from "./config.js";
 
-export const serve = (config: Config) => {
-  const { port, dirs, collections } = config;
+export const serve = (config: Config, port: number) => {
+  const { dirs, collections } = config;
 
   // Initialize a websockets-enabled Koa app.
   const app = websockify(new Koa());

@@ -1,7 +1,6 @@
 import glob from "glob";
-import { Config, Scaffold } from "./config.js";
-import { Loader } from "./loader.js";
-import { Include } from "./include.js";
+import { Format, IncludeTag } from "./format.js";
+import { Scaffold } from "./scaffold.js";
 
 export type Component = {
   name: string;
@@ -10,35 +9,48 @@ export type Component = {
 };
 
 export type CollectionOptions = {
-  loaderIDs?: string[];
-  scaffoldIDs?: string[];
-  includeIDs?: string[];
+  name: string;
+  formats?: Format[];
+  scaffolds?: Scaffold[];
+  includeTags?: IncludeTag[];
+  dirName?: string;
 };
 
 export class Collection {
-  config: Config;
   name: string;
-  dir: string;
-  loaderIDs: string[];
-  scaffoldIDs: string[];
-  includeIDs: string[];
+  dirName: string;
+  formats: Format[];
+  scaffolds: Scaffold[];
+  includeTags: IncludeTag[];
+  options: CollectionOptions;
+  projectDir: string;
 
-  constructor(config: Config, name: string, options: CollectionOptions = {}) {
+  constructor(options: CollectionOptions) {
     const {
-      loaderIDs: loaders = ["*"],
-      scaffoldIDs: scaffolds = ["*"],
-      includeIDs: includeIDs = ["*"],
+      name = "My Collection",
+      formats = [],
+      scaffolds = [],
+      includeTags = [],
+      dirName = "my-collection",
     } = options;
 
-    const { dirs } = config;
+    this.options = options;
 
-    this.config = config;
     this.name = name;
-    this.loaderIDs = loaders;
-    this.scaffoldIDs = scaffolds;
-    this.includeIDs = includeIDs;
+    this.dirName = dirName;
 
-    this.dir = `${dirs.target}/${name}`;
+    this.includeTags = includeTags;
+    this.formats = formats;
+    this.scaffolds = scaffolds.map((scaffold) => {
+      scaffold.collection = this;
+      return scaffold;
+    });
+
+    this.projectDir = process.cwd();
+  }
+
+  get dir() {
+    return `${this.projectDir}/${this.dirName}`;
   }
 
   get components() {
@@ -47,50 +59,12 @@ export class Collection {
       .filter((globDir) => !globDir.includes("node_modules"))
       .map((componentDir) => {
         const componentName = componentDir.replace(/^.+\//, "");
-        const componentRoute = `/${this.name}/${componentName}`;
+        const componentRoute = `/${this.dirName}/${componentName}`;
         return {
           name: componentName,
           dir: componentDir,
           route: componentRoute,
         } as Component;
       });
-  }
-
-  get scaffolds() {
-    if (this.scaffoldIDs.includes("*")) {
-      return Array.from(this.config.scaffolds.values());
-    } else {
-      return this.scaffoldIDs.reduce((bucket, scaffoldId) => {
-        const scaffold = this.config.scaffolds.get(scaffoldId);
-        if (scaffold) bucket.push(scaffold);
-        return bucket;
-      }, <Scaffold[]>[]);
-    }
-  }
-
-  get loaders() {
-    if (this.loaderIDs.includes("*")) {
-      return Array.from(this.config.loaders.values());
-    } else {
-      return this.loaderIDs.reduce((bucket, loaderId) => {
-        const loader = this.config.loaders.get(loaderId);
-        if (loader) bucket.push(loader);
-        return bucket;
-      }, <Loader[]>[]);
-    }
-  }
-
-  get includes() {
-    if (this.includeIDs.includes("*")) {
-      return Array.from(this.config.includes.values());
-    } else {
-      return this.includeIDs.reduce((bucket, tagID) => {
-        const include = this.config.includes.get(tagID);
-        if (include) {
-          bucket.push(include);
-        }
-        return bucket;
-      }, <Include[]>[]);
-    }
   }
 }
