@@ -1,4 +1,4 @@
-import yargs, { Argv } from "yargs";
+import yargs, { Argv, Arguments } from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { Config } from "./config.js";
@@ -13,7 +13,7 @@ import { newComponent } from "./new-component.js";
  * @param y The yargs.Argv configuration object.
  * @returns A new yargs.Argv configuration object with our additions.
  */
-const addCommonArgv = (y: Argv) => {
+function addCommonArgv(y: Argv) {
   y.option("dir", {
     describe: "Set the folder that contains your Design System project.",
     default: "",
@@ -28,7 +28,7 @@ const addCommonArgv = (y: Argv) => {
     dir: string;
     conf: string;
   }>;
-};
+}
 
 yargs(hideBin(process.argv))
   .command(
@@ -41,8 +41,8 @@ yargs(hideBin(process.argv))
         alias: "p",
       }),
     async (argv) => {
-      const config = await Config.new(argv);
-      serve(config);
+      const config = await Config.new(argv.dir, argv.conf);
+      serve(config, argv.port);
     }
   )
   .command(
@@ -50,7 +50,7 @@ yargs(hideBin(process.argv))
     "Build the project's components for publication.",
     (y) => addCommonArgv(y),
     async (argv) => {
-      const config = await Config.new(argv);
+      const config = await Config.new(argv.dir, argv.conf);
       await build(config);
       process.exit(0);
     }
@@ -74,7 +74,7 @@ yargs(hideBin(process.argv))
           "Create a Decal configuration file.",
           (y) => y,
           async (argv) => {
-            const config = await Config.new(argv);
+            const config = await Config.new(argv.dir, argv.conf);
             await newConfig(config);
             process.exit(0);
           }
@@ -84,7 +84,7 @@ yargs(hideBin(process.argv))
           "Create a new Decal component.",
           (y) => y,
           async (argv) => {
-            const config = await Config.new(argv);
+            const config = await Config.new(argv.dir, argv.conf);
             await newComponent(config);
             process.exit(0);
           }

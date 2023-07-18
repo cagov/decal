@@ -4,11 +4,11 @@ import { promises as fs } from "fs";
 import { createHtmlHandler } from "./html-handler.js";
 import { createDigestHandler } from "./digest-handler.js";
 import { Config } from "../config.js";
-import { Loader } from "../loader.js";
+import { Format } from "../format.js";
 import { FileReadError } from "../errors.js";
 
 export const createRouter = (config: Config) => {
-  const { dirs, collections, loaders } = config;
+  const { dirs, collections } = config;
 
   const router = new Router();
 
@@ -88,8 +88,9 @@ export const createRouter = (config: Config) => {
   */
 
   // Set up the router to perform the following actions against all requests.
-  const loaderRoutes = Array.from(loaders)
-    .map(([id, loader]) => `/(.*)${loader.src.extname}`)
+  const loaderRoutes = collections
+    .flatMap((collection) => collection.formats)
+    .map((format) => `/(.*)${format.src.extname}`)
     .sort((a, b) => b.length - a.length);
 
   router.get(loaderRoutes, async (ctx, next) => {
@@ -118,10 +119,10 @@ export const createRouter = (config: Config) => {
   router.get("/(.*).html", htmlHandler);
 
   // Create a route for the given loader.
-  const createLoaderRoute = (route: string, loader: Loader) => {
-    const processor = loader.processor;
+  const createLoaderRoute = (route: string, format: Format) => {
+    const formatter = format.formatter;
 
-    if (processor) {
+    if (formatter) {
       router.get(route, async (ctx) => {
         if (!ctx.state.fileLoader) {
           await fs
@@ -129,14 +130,14 @@ export const createRouter = (config: Config) => {
             .catch((err) => {
               throw new FileReadError(err.message, err.code, err.path);
             })
-            .then((contents) => processor(ctx.state.filePath, contents))
+            .then((contents) => formatter(ctx.state.filePath, contents))
             .then((result) => {
-              ctx.state.fileLoader = loader.name;
+              ctx.state.fileLoader = format.name;
               ctx.body = result;
-              ctx.type = loader.dist.mimeType;
+              ctx.type = format.dist.mimeType;
             })
             .catch((err) => {
-              ctx.state.fileLoader = loader.name;
+              ctx.state.fileLoader = format.name;
               if (err.name === "FileReadError") {
                 ctx.body = "Not found";
                 ctx.status = 404;
@@ -152,20 +153,21 @@ export const createRouter = (config: Config) => {
 
   // Create collection-specific routes for each loader in each collection.
   collections.forEach((collection) => {
-    collection.loaders
+    collection.formats
       .sort((a, b) => b.src.extname.length - a.src.extname.length)
-      .forEach((loader) => {
-        const route = `/${collection.name}/(.*)${loader.src.extname}`;
-        createLoaderRoute(route, loader);
+      .forEach((format) => {
+        const route = `/${collection.name}/(.*)${format.src.extname}`;
+        createLoaderRoute(route, format);
       });
   });
 
   // Create generic, fall-back routes for every loader, across all collections.
-  Array.from(loaders)
-    .sort((a, b) => b[1].src.extname.length - a[1].src.extname.length)
-    .forEach(([id, loader]) => {
-      const route = `/(.*)${loader.src.extname}`;
-      createLoaderRoute(route, loader);
+  collections
+    .flatMap((collection) => collection.formats)
+    .sort((a, b) => b.src.extname.length - a.src.extname.length)
+    .forEach((format) => {
+      const route = `/(.*)${format.src.extname}`;
+      createLoaderRoute(route, format);
     });
 
   // Return the router for consumption by a Koa app.

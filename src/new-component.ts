@@ -1,5 +1,4 @@
 import prompts, { PromptObject } from "prompts";
-import { promises as fs } from "fs";
 import { Config } from "./config.js";
 import { Collection } from "./collection.js";
 
@@ -39,28 +38,11 @@ export const newComponent = async (config: Config) => {
     : collections[0];
 
   const name = responses.name;
-  const kebabCase = name.toLowerCase().replaceAll(" ", "-");
-  const camelCase = name
-    .split(" ")
-    .map((word: string) => `${word[0].toUpperCase()}${word.substring(1)}`)
-    .join("");
-
-  const names = {
-    plainCase: name,
-    kebabCase,
-    camelCase,
-  };
-
-  const dir = `${collection.dir}/${kebabCase}`;
-
-  await fs
-    .mkdir(dir)
-    .then(() => Promise.all([fs.mkdir(`${dir}/src`), fs.mkdir(`${dir}/demo`)]));
 
   const scaffoldings: Promise<void>[] = [];
 
   collection.scaffolds.forEach((scaffold) => {
-    const scaffolding = Promise.resolve(scaffold(dir, names, collection));
+    const scaffolding = Promise.resolve(scaffold.make(name));
     scaffoldings.push(scaffolding);
   });
 

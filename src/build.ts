@@ -12,11 +12,11 @@ export const build = async (config: Config) => {
 
   collections.forEach((collection) => {
     collection.components.forEach((component) => {
-      collection.loaders.forEach((loader) => {
-        const processor = loader.processor;
+      collection.formats.forEach((format) => {
+        const formatter = format.formatter;
 
-        if (processor) {
-          const filePaths = loader.entryPoints.map(
+        if (formatter) {
+          const filePaths = format.entryPoints.map(
             (entryPoint) => `${component.dir}/src/${entryPoint}`
           );
 
@@ -26,10 +26,10 @@ export const build = async (config: Config) => {
               .catch((err) => {
                 throw new FileReadError(err.message, err.code, err.path);
               })
-              .then((contents) => processor(filePath, contents))
+              .then((contents) => formatter(filePath, contents))
               .then(async (result) => {
                 const outFilePath = filePath
-                  .replace(loader.src.extname, loader.dist.extname)
+                  .replace(format.src.extname, format.dist.extname)
                   .replace("/src", "")
                   .replace(dirs.target, `${dirs.target}/dist`);
 
@@ -38,7 +38,7 @@ export const build = async (config: Config) => {
                 await fs.mkdir(outFileDir, { recursive: true });
                 return fs.writeFile(outFilePath, result).then(() => {
                   console.log(
-                    `${chalk.magenta(loader.name)}: ${dirs.relative(
+                    `${chalk.magenta(format.name)}: ${dirs.relative(
                       outFilePath
                     )}`
                   );

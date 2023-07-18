@@ -1,13 +1,9 @@
-import defaultLoaderTagsPlugin from "./default-loader-tags.js";
-import cagovWebComponentPlugin from "./cagov-web-component.js";
-import cagovSassComponentPlugin from "./cagov-sass-component.js";
-import cagovReactCompanion from "./cagov-react-companion.js";
+import { WebComponentCollection } from "./cagov-web-component.js";
+import { SassCollection } from "./cagov-sass-component.js";
 
 export default (decalConfig) => {
-  decalConfig.addPlugin(defaultLoaderTagsPlugin);
-
-  decalConfig.addPlugin(cagovWebComponentPlugin);
-  decalConfig.addPlugin(cagovSassComponentPlugin);
-
-  decalConfig.addPlugin(cagovReactCompanion);
+  decalConfig.applyCollection(WebComponentCollection, {
+    dirName: "components",
+  });
+  decalConfig.applyCollection(SassCollection, { dirName: "styles" });
 };
