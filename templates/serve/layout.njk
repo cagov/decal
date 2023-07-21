@@ -19,11 +19,48 @@
         return false;
       });
     </script>
+    <style>
+      nav.digest-nav {
+        padding: 1rem 2rem;
+        background: silver;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      form.entrypoint-toggler {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      form.entrypoint-toggler button {
+        background: white;
+        padding: 0.25rem 0.5rem;
+        border: gray 0.25rem solid;
+        border-radius: 1rem;
+      }
+    </style>
     {% for includeTag in includeTags %}
       {{ includeTag | safe }}
     {% endfor %}
   </head>
   <body>
+    <nav class="digest-nav">
+      <a href="/">⬅️ Back to digest</a>
+      <div>|</div>
+      <div>Enabled sources:</div>
+      {% if entryPoints | length %}
+        <form class="entrypoint-toggler">
+          {% for entryPoint in entryPoints %}
+            <div>
+              <input type="checkbox" id="{{ entryPoint.name }}" name="{{ entryPoint.name }}" {% if entryPoint.enabled -%} checked {%- endif %}>
+              <label for="{{ entryPoint.name }}">{{ entryPoint.name }}</label>
+            </div>
+          {% endfor %}
+          <button type="submit">Reload</button>
+          <input type="hidden" id="reload" name="reload" value="true"/>
+        </form>
+      {% endif %}
+    </nav>
     {% include content %}
   </body>
 </html>

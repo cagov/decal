@@ -31,7 +31,7 @@ export const build = async (config: Config) => {
                 const outFilePath = filePath
                   .replace(format.src.extname, format.dist.extname)
                   .replace("/src", "")
-                  .replace(dirs.target, `${dirs.target}/dist`);
+                  .replace(dirs.target, `${dirs.target}/_dist`);
 
                 const outFileDir = path.dirname(outFilePath);
 
@@ -61,7 +61,7 @@ export const build = async (config: Config) => {
 
   console.log("Entering build mode");
   console.log(`Sourcing from ${dirs.relative(dirs.target)}`);
-  console.log(`Building to ${dirs.relative(dirs.target)}/dist\n`);
+  console.log(`Building to ${dirs.relative(dirs.target)}/_dist\n`);
 
   await Promise.all(builders);
 };

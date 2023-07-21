@@ -10,7 +10,7 @@ const templatesDir = `templates/scaffold/cagov-web-component`;
 const nunjucksEnv = getEnvironment(templatesDir);
 const renderToFile = getRenderer(nunjucksEnv);
 
-export const esbuildFormatter: Formatter = (filePath) =>
+export const formatter: Formatter = (filePath) =>
   esbuild
     .build({
       entryPoints: [filePath],
@@ -46,19 +46,23 @@ export const esbuildFormatter: Formatter = (filePath) =>
 export const EsbuildFormat = new Format({
   name: "JavaScript via esbuild",
   entryPoints: ["index.js"],
-  formatter: esbuildFormatter,
+  formatter,
 });
 
+/*
 export const PlainCssFormat = new Format({
   name: "Plain CSS",
   entryPoints: ["index.css"],
 });
+*/
 
 const scaffolder: Scaffolder = async (dir, names, collection) => {
   const params = {
     names,
     collection,
   };
+
+  console.log(dir);
 
   await Promise.all([
     fs.copyFile(
@@ -76,8 +80,29 @@ export const WebComponentScaffold = new Scaffold({
   scaffolder,
 });
 
+const bundler = async (collection: Collection) => {
+  const inserts = collection.components
+    .flatMap((component) =>
+      EsbuildFormat.entryPoints.map(
+        (entryPoint) => `import * from '../${component.slug}/src/${entryPoint}'`
+      )
+    )
+    .join("\n");
+
+  const tempFilePath = `${collection.projectDir}/_temp/${collection.dirName}.bundle.js}`;
+  await fs.writeFile(tempFilePath, inserts);
+
+  const bundleResult = await formatter(tempFilePath, inserts);
+
+  const bundleFilePath = `${collection.projectDir}/_dist/bundles/${collection.dirName}.bundle.js}`;
+  await fs.writeFile(bundleFilePath, bundleResult);
+};
+
+export const WebComponentBundle = new Object({});
+
 export const WebComponentCollection = new Collection({
   name: "Web Components",
-  formats: [EsbuildFormat, PlainCssFormat],
+  formats: [EsbuildFormat],
   scaffolds: [WebComponentScaffold],
+  bundles: [bundler],
 });

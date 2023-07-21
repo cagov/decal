@@ -17,11 +17,6 @@
           {% for file in component.files %}
             <p>
               <a href="{{ component.route }}/{{ file }}">{{ file }}</a>
-              : {% set pipe = joiner("|") %}
-              {% for param in collection.queryParams %}
-                {{ pipe() }}
-                <a href="{{ component.route }}/{{ file }}?{{ param.key }}">No {{ param.name }}</a>
-              {% endfor %}
             </p>
           {% endfor %}
         {% endfor %}

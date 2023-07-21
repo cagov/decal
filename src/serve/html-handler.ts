@@ -6,6 +6,7 @@ import { getEnvironment } from "../nunjucks.js";
 
 type RenderAttributes = {
   content?: Template;
+  entryPoints: { name: string; enabled: boolean }[];
   includeTags: string[];
 };
 
@@ -21,6 +22,8 @@ export const createHtmlHandler = (config: Config) => {
       query,
     } = ctx;
 
+    console.log(query);
+
     // If the path ends with .raw.html, pass. Don't template it.
     if (ctx.path.endsWith(".raw.html")) {
       return;
@@ -28,6 +31,7 @@ export const createHtmlHandler = (config: Config) => {
 
     const renderAttributes: RenderAttributes = {
       includeTags: [],
+      entryPoints: [],
     };
 
     // Load the given HTML file.
@@ -71,14 +75,19 @@ export const createHtmlHandler = (config: Config) => {
             fs
               .access(`${componentPath}/src/${entryPoint}`)
               .then(() => {
-                const queryKey = `no-${entryPoint}`;
-                const queryParam = query[queryKey];
-                const enabled = !(queryParam === "" || queryParam === "true");
-                if (enabled) {
-                  const tag = includeTag(entryPoint);
-                  if (tag) {
-                    renderAttributes.includeTags.push(tag);
-                  }
+                const queryParam = query[entryPoint];
+                const reload = query["reload"] === "true";
+                const enabled = !reload || (reload && queryParam === "on");
+
+                const tag = enabled ? includeTag(entryPoint) : "";
+
+                renderAttributes.entryPoints.push({
+                  name: entryPoint,
+                  enabled: tag ? true : false,
+                });
+
+                if (tag) {
+                  renderAttributes.includeTags.push(tag);
                 }
               })
               .catch(() => void 0)

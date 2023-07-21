@@ -11,13 +11,6 @@ export const createDigestHandler = (config: Config) => {
 
   return async (ctx: DefaultContext) => {
     const _collections = collections.map((collection) => {
-      const queryParams = collection.formats.flatMap((format) =>
-        format.entryPoints.map((entryPoint) => ({
-          name: entryPoint,
-          key: `no-${entryPoint}`,
-        }))
-      );
-
       const components = collection.components.map((component) => {
         const files = glob
           .sync(`${component.dir}/demo/*.html`)
@@ -32,7 +25,6 @@ export const createDigestHandler = (config: Config) => {
       return {
         ...collection,
         components,
-        queryParams,
       };
     });
 
