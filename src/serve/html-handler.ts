@@ -94,7 +94,7 @@ export const createHtmlHandler = (config: Config) => {
             const tag = enabled ? include.tag("") : "";
 
             renderAttributes.entryPoints.push({
-              name: `${include.name} (collection-level)`,
+              name: `${include.name}`,
               id: include.id,
               enabled: tag ? true : false,
             });
@@ -112,7 +112,7 @@ export const createHtmlHandler = (config: Config) => {
     await Promise.all(includers);
 
     // Render the HTML file into the template.
-    const body = nunjucksEnv.render("layout.njk", renderAttributes);
+    const body = nunjucksEnv.render("plain.njk", renderAttributes);
 
     // Return the result.
     ctx.body = body;

@@ -83,12 +83,12 @@ const bundler: Bundler = async (collection) => {
   const inserts = collection.components
     .map(
       (component) =>
-        `import * as ${component.name} from '../${component.slug}/src/${EsbuildFormat.entryPoint}'`
+        `import '../${component.slug}/src/${EsbuildFormat.entryPoint}';`
     )
     .join("\n");
 
   const tempPath = `${collection.projectDir}/_temp`;
-  await fs.mkdir(tempPath, { recursive: true });
+  await fs.mkdir(tempPath);
 
   const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
   await fs.writeFile(tempFilePath, inserts);
