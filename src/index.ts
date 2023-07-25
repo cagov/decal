@@ -4,9 +4,9 @@ import { hideBin } from "yargs/helpers";
 import { Config } from "./config.js";
 import { serve } from "./serve.js";
 import { build } from "./build.js";
+import { Scaffold } from "./scaffold.js";
 import { newProject } from "./new-project.js";
 import { newConfig } from "./new-config.js";
-import { newComponent } from "./new-component.js";
 
 /**
  * Adds common CLI-option configurations to any yargs CLI command.
@@ -47,11 +47,31 @@ yargs(hideBin(process.argv))
   )
   .command(
     "build",
-    "Build the project's components for publication.",
+    "Build the project's components for publication, a la carte.",
     (y) => addCommonArgv(y),
     async (argv) => {
       const config = await Config.new(argv.dir, argv.conf);
       await build(config);
+      process.exit(0);
+    }
+  )
+  .command(
+    "bundle",
+    "Bundle the project's components for publication.",
+    (y) => addCommonArgv(y),
+    async (argv) => {
+      const config = await Config.new(argv.dir, argv.conf);
+      const bundlings: Promise<void>[] = [];
+
+      config.collections.forEach((collection) => {
+        collection.bundles.forEach(async (bundle) => {
+          const bundling = bundle.make(collection);
+          bundlings.push(bundling);
+        });
+      });
+
+      await Promise.all(bundlings);
+
       process.exit(0);
     }
   )
@@ -85,7 +105,9 @@ yargs(hideBin(process.argv))
           (y) => y,
           async (argv) => {
             const config = await Config.new(argv.dir, argv.conf);
-            await newComponent(config);
+            const response = await Scaffold.prompt(config);
+            const { newComponentName, collection } = response;
+            await Scaffold.makeAll(newComponentName, collection.scaffolds);
             process.exit(0);
           }
         )

@@ -57,10 +57,6 @@ export class Config {
 
     if (configFn) configFn.default(config);
 
-    config.collections.forEach((collection) =>
-      console.log(collection.components)
-    );
-
     return config;
   }
 

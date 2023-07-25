@@ -39,8 +39,8 @@ const sassRenderer: Formatter = (filePath) =>
     });
 
 export const SassFormat = new Format({
-  name: "CSS via Sass",
-  entryPoints: ["index.scss"],
+  name: "CSS/Sass",
+  entryPoint: "index.scss",
   src: { extname: ".scss" },
   dist: { extname: ".css" },
   formatter: sassRenderer,

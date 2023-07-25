@@ -6,7 +6,7 @@ import { getEnvironment } from "../nunjucks.js";
 
 type RenderAttributes = {
   content?: Template;
-  entryPoints: { name: string; enabled: boolean }[];
+  entryPoints: { name: string; id: string; enabled: boolean }[];
   includeTags: string[];
 };
 
@@ -21,8 +21,6 @@ export const createHtmlHandler = (config: Config) => {
       state: { filePath },
       query,
     } = ctx;
-
-    console.log(query);
 
     // If the path ends with .raw.html, pass. Don't template it.
     if (ctx.path.endsWith(".raw.html")) {
@@ -57,42 +55,57 @@ export const createHtmlHandler = (config: Config) => {
     const includers: Promise<void>[] = [];
 
     if (collection) {
-      collection.includeTags.forEach((includeTag) => {
+      collection.formats.forEach((format) => {
+        const include = format.include;
+        const entryPoint = format.entryPoint;
+
         includers.push(
-          new Promise((resolve) => {
-            const tag = includeTag("");
-            renderAttributes.includeTags.push(tag);
-            resolve(void 0);
-          })
+          fs
+            .access(`${componentPath}/src/${entryPoint}`)
+            .then(() => {
+              const queryId = `${include.id}-${entryPoint}`;
+              const queryParam = query[queryId];
+              const reload = query["reload"] === "true";
+              const enabled = !reload || (reload && queryParam === "on");
+
+              const tag = enabled ? include.tag(entryPoint) : "";
+
+              renderAttributes.entryPoints.push({
+                name: `${format.name} (${entryPoint})`,
+                id: queryId,
+                enabled: tag ? true : false,
+              });
+
+              if (tag) {
+                renderAttributes.includeTags.push(tag);
+              }
+            })
+            .catch(() => void 0)
         );
       });
 
-      collection.formats.forEach((format) => {
-        const includeTag = format.includeTag;
+      collection.includes.forEach((include) => {
+        includers.push(
+          new Promise((resolve) => {
+            const queryParam = query[include.id];
+            const reload = query["reload"] === "true";
+            const enabled = !reload || (reload && queryParam === "on");
 
-        format.entryPoints.forEach((entryPoint) => {
-          includers.push(
-            fs
-              .access(`${componentPath}/src/${entryPoint}`)
-              .then(() => {
-                const queryParam = query[entryPoint];
-                const reload = query["reload"] === "true";
-                const enabled = !reload || (reload && queryParam === "on");
+            const tag = enabled ? include.tag("") : "";
 
-                const tag = enabled ? includeTag(entryPoint) : "";
+            renderAttributes.entryPoints.push({
+              name: `${include.name} (collection-level)`,
+              id: include.id,
+              enabled: tag ? true : false,
+            });
 
-                renderAttributes.entryPoints.push({
-                  name: entryPoint,
-                  enabled: tag ? true : false,
-                });
+            if (tag) {
+              renderAttributes.includeTags.push(tag);
+            }
 
-                if (tag) {
-                  renderAttributes.includeTags.push(tag);
-                }
-              })
-              .catch(() => void 0)
-          );
-        });
+            resolve(void 0);
+          })
+        );
       });
     }
 

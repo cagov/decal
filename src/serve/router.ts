@@ -98,7 +98,7 @@ export const createRouter = (config: Config) => {
     await next();
 
     // After all asset middlewares are complete below, log the request.
-    console.log(`${chalk.blue("Loader")}: ${ctx.state.fileLoader}`);
+    console.log(`${chalk.blue("Format")}: ${ctx.state.fileLoader}`);
     console.log(`${chalk.blue("Request")}: ${ctx.path}`);
     const logPath = dirs.relative(ctx.state.filePath);
     if (ctx.status === 404) {

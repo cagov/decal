@@ -1,10 +1,18 @@
 import { Collection } from "./collection.js";
+import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
+import { Config } from "./config.js";
 
 export type ScaffoldNames = {
   plainCase: string;
   camelCase: string;
   kebabCase: string;
+  snakeCase: string;
+};
+
+export type ScaffoldPromptResponse = {
+  newComponentName: string;
+  collection: Collection;
 };
 
 export type Scaffolder = (
@@ -36,17 +44,19 @@ export class Scaffold {
     this.collection = new Collection({ name: "Default" });
   }
 
-  async make(name: string) {
-    const kebabCase = name.toLowerCase().replaceAll(" ", "-");
-    const camelCase = name
+  async make(newComponentName: string) {
+    const kebabCase = newComponentName.toLowerCase().replaceAll(" ", "-");
+    const snakeCase = newComponentName.toLowerCase().replaceAll(" ", "_");
+    const camelCase = newComponentName
       .split(" ")
       .map((word: string) => `${word[0].toUpperCase()}${word.substring(1)}`)
       .join("");
 
     const names = {
-      plainCase: name,
+      plainCase: newComponentName,
       kebabCase,
       camelCase,
+      snakeCase,
     };
 
     const dirName = this.dirNamer(names);
@@ -74,5 +84,59 @@ export class Scaffold {
     );
 
     return scaffolding;
+  }
+
+  static async prompt(config: Config) {
+    const { collections } = config;
+
+    const questions: PromptObject<string>[] = [
+      {
+        type: "text",
+        name: "name",
+        message: "What's the name of your new component?",
+        format: (str: string) => str.replace(/[^A-Za-z0-9\s]/g, ""),
+        validate: (str: string) => str.length > 1,
+      },
+    ];
+
+    const hasManyCollections = collections.length > 1;
+
+    if (hasManyCollections) {
+      const collectionChoices = collections.map((collection) => ({
+        title: collection.name,
+        value: collection,
+      }));
+
+      questions.unshift({
+        type: "select",
+        name: "collection",
+        message: "In which collection would you like to creote this component?",
+        choices: collectionChoices,
+      });
+    }
+
+    const responses = await prompts(questions);
+
+    const collection = hasManyCollections
+      ? responses.collection
+      : collections[0];
+
+    const newComponentName = responses.name;
+
+    return {
+      newComponentName,
+      collection,
+    } as ScaffoldPromptResponse;
+  }
+
+  static async makeAll(newComponentName: string, scaffolds: Scaffold[]) {
+    const scaffoldings: Promise<void>[] = [];
+
+    scaffolds.forEach((scaffold) => {
+      const scaffolding = Promise.resolve(scaffold.make(newComponentName));
+      scaffoldings.push(scaffolding);
+    });
+
+    await Promise.all(scaffoldings);
   }
 }

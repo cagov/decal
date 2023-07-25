@@ -1,22 +1,18 @@
 import glob from "glob";
-import { Format, IncludeTag } from "./format.js";
+import { Format } from "./format.js";
 import { Scaffold } from "./scaffold.js";
+import { Component } from "./component.js";
+import { Include } from "./include.js";
+import { Bundle } from "./bundle.js";
 
 export type Bundler = (collection: Collection) => void | Promise<void>;
-
-export type Component = {
-  name: string;
-  dir: string;
-  route: string;
-  slug: string;
-};
 
 export type CollectionOptions = {
   name: string;
   formats?: Format[];
   scaffolds?: Scaffold[];
-  includeTags?: IncludeTag[];
-  bundles?: Bundler[];
+  includes?: Include[];
+  bundles?: Bundle[];
   dirName?: string;
 };
 
@@ -25,8 +21,8 @@ export class Collection {
   dirName: string;
   formats: Format[];
   scaffolds: Scaffold[];
-  includeTags: IncludeTag[];
-  bundles: Bundler[];
+  includes: Include[];
+  bundles: Bundle[];
   options: CollectionOptions;
   projectDir: string;
 
@@ -35,7 +31,7 @@ export class Collection {
       name = "My Collection",
       formats = [],
       scaffolds = [],
-      includeTags = [],
+      includes = [],
       bundles = [],
       dirName = "my-collection",
     } = options;
@@ -45,9 +41,10 @@ export class Collection {
     this.name = name;
     this.dirName = dirName;
 
-    this.includeTags = includeTags;
+    this.includes = includes;
     this.bundles = bundles;
     this.formats = formats;
+
     this.scaffolds = scaffolds.map((scaffold) => {
       scaffold.collection = this;
       return scaffold;
@@ -65,15 +62,8 @@ export class Collection {
       .sync(`${this.dir}/*`)
       .filter((globDir) => !globDir.includes("node_modules"))
       .map((componentDir) => {
-        const componentName = componentDir.replace(/^.+\//, "");
-        const componentSlug = `${this.dirName}/${componentName}`;
-        const componentRoute = `/${componentSlug}`;
-        return {
-          name: componentName,
-          slug: componentSlug,
-          dir: componentDir,
-          route: componentRoute,
-        } as Component;
+        const component = new Component(componentDir, this);
+        return component;
       });
   }
 }

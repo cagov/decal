@@ -16,42 +16,36 @@ export const build = async (config: Config) => {
         const formatter = format.formatter;
 
         if (formatter) {
-          const filePaths = format.entryPoints.map(
-            (entryPoint) => `${component.dir}/src/${entryPoint}`
-          );
+          const filePath = `${component.dir}/src/${format.entryPoint}`;
 
-          filePaths.forEach((filePath) => {
-            const promise = fs
-              .readFile(filePath, "utf-8")
-              .catch((err) => {
-                throw new FileReadError(err.message, err.code, err.path);
-              })
-              .then((contents) => formatter(filePath, contents))
-              .then(async (result) => {
-                const outFilePath = filePath
-                  .replace(format.src.extname, format.dist.extname)
-                  .replace("/src", "")
-                  .replace(dirs.target, `${dirs.target}/_dist`);
+          const promise = fs
+            .readFile(filePath, "utf-8")
+            .catch((err) => {
+              throw new FileReadError(err.message, err.code, err.path);
+            })
+            .then((contents) => formatter(filePath, contents))
+            .then(async (result) => {
+              const outFilePath = filePath
+                .replace(format.src.extname, format.dist.extname)
+                .replace("/src", "")
+                .replace(dirs.target, `${dirs.target}/_dist`);
 
-                const outFileDir = path.dirname(outFilePath);
+              const outFileDir = path.dirname(outFilePath);
 
-                await fs.mkdir(outFileDir, { recursive: true });
-                return fs.writeFile(outFilePath, result).then(() => {
-                  console.log(
-                    `${chalk.magenta(format.name)}: ${dirs.relative(
-                      outFilePath
-                    )}`
-                  );
-                });
-              })
-              .catch((err) => {
-                if (!(err.name === "FileReadError")) {
-                  console.log(err.message);
-                }
+              await fs.mkdir(outFileDir, { recursive: true });
+              return fs.writeFile(outFilePath, result).then(() => {
+                console.log(
+                  `${chalk.magenta(format.name)}: ${dirs.relative(outFilePath)}`
+                );
               });
+            })
+            .catch((err) => {
+              if (!(err.name === "FileReadError")) {
+                console.log(err.message);
+              }
+            });
 
-            builders.push(promise);
-          });
+          builders.push(promise);
         }
       });
     });

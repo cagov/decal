@@ -52,8 +52,8 @@
         <form class="entrypoint-toggler">
           {% for entryPoint in entryPoints %}
             <div>
-              <input type="checkbox" id="{{ entryPoint.name }}" name="{{ entryPoint.name }}" {% if entryPoint.enabled -%} checked {%- endif %}>
-              <label for="{{ entryPoint.name }}">{{ entryPoint.name }}</label>
+              <input type="checkbox" id="{{ entryPoint.id }}" name="{{ entryPoint.id }}" {% if entryPoint.enabled -%} checked {%- endif %}>
+              <label for="{{ entryPoint.id }}">{{ entryPoint.name }}</label>
             </div>
           {% endfor %}
           <button type="submit">Reload</button>

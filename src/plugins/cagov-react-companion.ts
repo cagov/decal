@@ -9,7 +9,7 @@ const renderToFile = getRenderer(nunjucksEnv);
 
 export const ReactFormat = new Format({
   name: "JSX via esbuild",
-  entryPoints: ["react.jsx"],
+  entryPoint: "react.jsx",
   src: { extname: ".jsx" },
   dist: { extname: ".js" },
   formatter: formatter,

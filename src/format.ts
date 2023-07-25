@@ -1,20 +1,20 @@
 import * as path from "path";
 import mime from "mime-types";
+import { Include } from "./include.js";
 
 export type Formatter = (
   filePath: string,
   contents: string
 ) => string | Promise<string>;
 
-export type IncludeTag = (input: string) => string;
-
 const defaultFormatter: Formatter = (_, contents: string) => contents;
 
 export type FormatOptions = {
   name: string;
-  entryPoints: string[];
+  id?: string;
+  entryPoint: string;
   formatter?: Formatter;
-  includeTag?: IncludeTag | boolean;
+  include?: Include | boolean;
   extname?: string;
   mimeType?: string;
   src?: {
@@ -29,9 +29,10 @@ export type FormatOptions = {
 
 export class Format {
   name: string;
+  id: string;
   formatter: Formatter;
-  includeTag: IncludeTag;
-  entryPoints: string[];
+  include: Include;
+  entryPoint: string;
   src: {
     extname: string;
     mimeType: string;
@@ -44,9 +45,10 @@ export class Format {
   constructor(options: FormatOptions) {
     const {
       name,
+      id,
       formatter = defaultFormatter,
-      includeTag = true,
-      entryPoints,
+      include = true,
+      entryPoint,
       extname,
       mimeType,
       src,
@@ -57,18 +59,19 @@ export class Format {
       throw new Error(`Loader error. No "name" specified.`);
     }
 
-    if (!entryPoints || (entryPoints && !entryPoints.length)) {
+    if (!entryPoint) {
       throw new Error(`Loader error: ${name}. No "entryPoint" specified.`);
     }
 
     this.name = name;
+    this.id = id
+      ? id.replace(/\W/g, "").toLowerCase()
+      : name.replace(/\W/g, "").toLowerCase();
     this.formatter = formatter;
-    this.entryPoints = entryPoints;
+    this.entryPoint = entryPoint;
 
     const srcExtname =
-      src && src.extname
-        ? src.extname
-        : extname || path.extname(entryPoints[0]);
+      src && src.extname ? src.extname : extname || path.extname(entryPoint);
 
     const srcMimeType =
       src && src.mimeType
@@ -81,9 +84,7 @@ export class Format {
     };
 
     const distExtname =
-      dist && dist.extname
-        ? dist.extname
-        : extname || path.extname(entryPoints[0]);
+      dist && dist.extname ? dist.extname : extname || path.extname(entryPoint);
 
     const distMimeType =
       dist && dist.mimeType
@@ -95,16 +96,57 @@ export class Format {
       mimeType: distMimeType,
     };
 
-    if (typeof includeTag === "function") {
-      this.includeTag = includeTag;
-    } else if (includeTag !== false && this.dist.extname.endsWith(".js")) {
-      this.includeTag = (input) =>
-        `<script type="module" src="src/${input}"></script>`;
-    } else if (includeTag !== false && this.dist.extname.endsWith(".css")) {
-      this.includeTag = (input) =>
-        `<link rel="stylesheet" href="src/${input}" />`;
+    if (include === true) {
+      this.include = Include.default(this.dist.extname, this.id);
+    } else if (include === false || include === undefined) {
+      this.include = new Include("Empty");
     } else {
-      this.includeTag = () => "";
+      this.include = include;
     }
   }
+
+  /*
+  buildToFile(component: Component, config: Config) {
+    const builders: Promise<void>[] = [];
+
+    const filePaths = this.entryPoints.map(
+      (entryPoint) => `${component.dir}/src/${entryPoint}`
+    );
+
+    filePaths.forEach((filePath) => {
+      const promise = fs
+        .readFile(filePath, "utf-8")
+        .catch((err) => {
+          throw new FileReadError(err.message, err.code, err.path);
+        })
+        .then((contents) => this.formatter(filePath, contents))
+        .then(async (result) => {
+          const outFilePath = filePath
+            .replace(this.src.extname, this.dist.extname)
+            .replace("/src", "")
+            .replace(config.dirs.target, `${config.dirs.target}/_dist`);
+
+          const outFileDir = path.dirname(outFilePath);
+
+          await fs.mkdir(outFileDir, { recursive: true });
+          return fs.writeFile(outFilePath, result).then(() => {
+            console.log(
+              `${chalk.magenta(this.name)}: ${config.dirs.relative(
+                outFilePath
+              )}`
+            );
+          });
+        })
+        .catch((err) => {
+          if (!(err.name === "FileReadError")) {
+            console.log(err.message);
+          }
+        });
+
+      builders.push(promise);
+    });
+
+    return builders;
+  }
+  */
 }
