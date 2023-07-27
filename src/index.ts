@@ -105,9 +105,7 @@ yargs(hideBin(process.argv))
           (y) => y,
           async (argv) => {
             const config = await Config.new(argv.dir, argv.conf);
-            const response = await Scaffold.prompt(config);
-            const { newComponentName, collection } = response;
-            await Scaffold.makeAll(newComponentName, collection.scaffolds);
+            await Scaffold.prompt(config);
             process.exit(0);
           }
         )

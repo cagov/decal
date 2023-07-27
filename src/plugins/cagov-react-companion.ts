@@ -40,7 +40,14 @@ export const scaffolder: Scaffolder = async (dir, names, collection) => {
   ]);
 };
 
-export const ReactScaffold = new Scaffold({
+export const ReactFromWebComponentScaffold = new Scaffold({
+  name: "React from Web Component",
+  dirNamer: (names) => names.camelCase,
+  scaffolder,
+});
+
+export const ReactFromScratchScaffold = new Scaffold({
+  name: "React from scratch",
   dirNamer: (names) => names.camelCase,
   scaffolder,
 });
@@ -74,6 +81,6 @@ export const ReactBundle = new Bundle("React Components Bundle", bundler);
 export const ReactCollection = new Collection({
   name: "React Components",
   formats: [ReactFormat],
-  scaffolds: [ReactScaffold],
+  scaffolds: [ReactFromWebComponentScaffold, ReactFromScratchScaffold],
   bundles: [ReactBundle],
 });

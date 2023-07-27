@@ -87,6 +87,7 @@ const scaffolder: Scaffolder = async (dir, names, collection) => {
 };
 
 export const WebComponentScaffold = new Scaffold({
+  name: "Standard Web Component",
   scaffolder,
 });
 

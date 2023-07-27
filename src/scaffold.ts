@@ -10,11 +10,6 @@ export type ScaffoldNames = {
   snakeCase: string;
 };
 
-export type ScaffoldPromptResponse = {
-  newComponentName: string;
-  collection: Collection;
-};
-
 export type Scaffolder = (
   dir: string,
   names: ScaffoldNames,
@@ -24,6 +19,7 @@ export type Scaffolder = (
 export type ScaffoldDirNamer = (names: ScaffoldNames) => string;
 
 export type ScaffoldOptions = {
+  name: string;
   dirNamer?: ScaffoldDirNamer;
   scaffolder: Scaffolder;
 };
@@ -31,13 +27,15 @@ export type ScaffoldOptions = {
 const defaultDirname: ScaffoldDirNamer = (names) => names.kebabCase;
 
 export class Scaffold {
+  name: string;
   dirNamer: ScaffoldDirNamer;
   scaffolder: Scaffolder;
   collection: Collection;
 
   constructor(options: ScaffoldOptions) {
-    const { dirNamer = defaultDirname, scaffolder } = options;
+    const { name, dirNamer = defaultDirname, scaffolder } = options;
 
+    this.name = name;
     this.dirNamer = dirNamer;
     this.scaffolder = scaffolder;
 
@@ -82,46 +80,35 @@ export class Scaffold {
         format: (str: string) => str.replace(/[^A-Za-z0-9\s]/g, ""),
         validate: (str: string) => str.length > 1,
       },
-    ];
-
-    const hasManyCollections = collections.length > 1;
-
-    if (hasManyCollections) {
-      const collectionChoices = collections.map((collection) => ({
-        title: collection.name,
-        value: collection,
-      }));
-
-      questions.unshift({
-        type: "select",
+      {
+        type: () => (collections.length > 1 ? "select" : null),
         name: "collection",
         message: "In which collection would you like to creote this component?",
-        choices: collectionChoices,
-      });
-    }
+        initial: 0,
+        choices: collections.map((collection) => ({
+          title: collection.name,
+          value: collection,
+        })),
+      },
+      {
+        type: (prev) => (prev && prev.scaffolds.length > 1 ? "select" : null),
+        name: "scaffold",
+        message: "Which scaffold would you like to use?",
+        initial: 0,
+        choices: (prev) =>
+          prev.scaffolds.map((scaffold: Scaffold) => ({
+            title: scaffold.name,
+            value: scaffold,
+          })),
+      },
+    ];
 
     const responses = await prompts(questions);
 
-    const collection = hasManyCollections
-      ? responses.collection
-      : collections[0];
-
     const newComponentName = responses.name;
+    const collection = responses.collection || collections[0];
+    const scaffold = responses.scaffold || collection.scaffolds[0];
 
-    return {
-      newComponentName,
-      collection,
-    } as ScaffoldPromptResponse;
-  }
-
-  static async makeAll(newComponentName: string, scaffolds: Scaffold[]) {
-    const scaffoldings: Promise<void>[] = [];
-
-    scaffolds.forEach((scaffold) => {
-      const scaffolding = Promise.resolve(scaffold.make(newComponentName));
-      scaffoldings.push(scaffolding);
-    });
-
-    await Promise.all(scaffoldings);
+    if (newComponentName && scaffold) await scaffold.make(newComponentName);
   }
 }

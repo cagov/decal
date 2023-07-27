@@ -68,6 +68,7 @@ const SassScaffolder: Scaffolder = async (dir, names, collection) => {
 };
 
 export const SassScaffold = new Scaffold({
+  name: "Standard Sass",
   scaffolder: SassScaffolder,
 });
 
