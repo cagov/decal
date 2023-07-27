@@ -1,8 +1,10 @@
 import nunjucks, { Template, render } from "nunjucks";
+import * as path from "path";
 import { promises as fs } from "fs";
 import { Config } from "../config.js";
 import { DefaultContext } from "koa";
 import { getEnvironment } from "../nunjucks.js";
+import { Includer } from "../include.js";
 
 type RenderAttributes = {
   content?: Template;
@@ -45,9 +47,6 @@ export const createHtmlHandler = (config: Config) => {
         renderAttributes.content = nunjucks.compile(str);
       });
 
-    const componentPathIndex = filePath.indexOf("/demo");
-    const componentPath = filePath.substring(0, componentPathIndex);
-
     const collection = collections.find((collection) => {
       return ctx.path.startsWith(`/${collection.dirName}`);
     });
@@ -55,33 +54,44 @@ export const createHtmlHandler = (config: Config) => {
     const includers: Promise<void>[] = [];
 
     if (collection) {
+      const componentPathRegex = RegExp(
+        `(.+\/${collection.dirName}\/[^/]+)\/.+$`,
+        "i"
+      );
+      const componentPath = filePath.match(componentPathRegex)[1];
+      const componentName = path.basename(componentPath);
+
       collection.formats.forEach((format) => {
         const include = format.include;
-        const entryPoint = format.entryPoint;
+        const entryPoint = format.entryPoint(componentName);
 
-        includers.push(
-          fs
-            .access(`${componentPath}/src/${entryPoint}`)
-            .then(() => {
-              const queryId = `${include.id}-${entryPoint}`;
-              const queryParam = query[queryId];
-              const reload = query["reload"] === "true";
-              const enabled = !reload || (reload && queryParam === "on");
+        if (include.id !== "empty") {
+          includers.push(
+            fs
+              .access(`${componentPath}/${entryPoint}`)
+              .then(() => {
+                const queryId = `${include.id}-${entryPoint}`;
+                const queryParam = query[queryId];
+                const reload = query["reload"] === "true";
+                const enabled = !reload || (reload && queryParam === "on");
 
-              const tag = enabled ? include.tag(entryPoint) : "";
+                const tag = enabled ? include.tag(entryPoint) : "";
 
-              renderAttributes.entryPoints.push({
-                name: `${format.name} (${entryPoint})`,
-                id: queryId,
-                enabled: tag ? true : false,
-              });
+                renderAttributes.entryPoints.push({
+                  name: `${format.name} (${entryPoint})`,
+                  id: queryId,
+                  enabled: tag ? true : false,
+                });
 
-              if (tag) {
-                renderAttributes.includeTags.push(tag);
-              }
-            })
-            .catch(() => void 0)
-        );
+                if (tag) {
+                  renderAttributes.includeTags.push(tag);
+                }
+              })
+              .catch(() => {
+                return void 0;
+              })
+          );
+        }
       });
 
       collection.includes.forEach((include) => {

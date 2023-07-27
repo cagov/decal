@@ -6,12 +6,13 @@ import { getEnvironment, getRenderer } from "../nunjucks.js";
 import { Format, Formatter } from "../format.js";
 import { Collection } from "../collection.js";
 import { Scaffold, Scaffolder } from "../scaffold.js";
+import { Bundle, Bundler } from "../bundle.js";
 
 const templatesDir = `templates/scaffold/cagov-sass-component`;
 const nunjucksEnv = getEnvironment(templatesDir);
 const renderToFile = getRenderer(nunjucksEnv);
 
-const sassRenderer: Formatter = (filePath) =>
+const formatter: Formatter = (filePath) =>
   sass
     .compileAsync(filePath, {
       sourceMap: false,
@@ -40,10 +41,10 @@ const sassRenderer: Formatter = (filePath) =>
 
 export const SassFormat = new Format({
   name: "CSS/Sass",
-  entryPoint: "index.scss",
+  entryPoint: (componentName) => `src/${componentName}.scss`,
   src: { extname: ".scss" },
   dist: { extname: ".css" },
-  formatter: sassRenderer,
+  formatter: formatter,
 });
 
 const SassScaffolder: Scaffolder = async (dir, names, collection) => {
@@ -55,10 +56,14 @@ const SassScaffolder: Scaffolder = async (dir, names, collection) => {
   await Promise.all([
     fs.copyFile(
       `${templatesDir}/hard-hat-bear.jpg`,
-      `${dir}/demo/hard-hat-bear.jpg`
+      `${dir}/hard-hat-bear.jpg`
     ),
-    renderToFile("index.html.njk", `${dir}/demo`, params),
-    renderToFile("index.scss.njk", `${dir}/src`, params),
+    renderToFile(
+      "index.html.njk",
+      `${dir}/${names.kebabCase}.demo.html`,
+      params
+    ),
+    renderToFile("index.scss.njk", `${dir}/${names.kebabCase}.scss`, params),
   ]);
 };
 
@@ -66,8 +71,38 @@ export const SassScaffold = new Scaffold({
   scaffolder: SassScaffolder,
 });
 
+const bundler: Bundler = async (collection) => {
+  const inserts = collection.components
+    .map((component) => {
+      const entryPoint = SassFormat.entryPoint(component.name);
+      return `@import "../${component.slug}/${entryPoint}";`;
+    })
+    .join("\n");
+
+  const tempPath = `${collection.projectDir}/_temp`;
+  await fs.mkdir(tempPath, { recursive: true });
+
+  const tempFilePath = `${tempPath}/${collection.dirName}.bundle.scss`;
+  await fs.writeFile(tempFilePath, inserts);
+
+  const bundleResult = await formatter(tempFilePath, inserts);
+  const bundleContent = bundleResult;
+
+  const bundlePath = `${collection.projectDir}/_dist/bundles`;
+  await fs.mkdir(bundlePath, { recursive: true });
+
+  const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.css`;
+  await fs.writeFile(bundleFilePath, bundleContent);
+};
+
+export const SassComponentsBundle = new Bundle(
+  "Web Components Bundle",
+  bundler
+);
+
 export const SassCollection = new Collection({
-  name: "Sass Components",
+  name: "Sass Styles",
   formats: [SassFormat],
   scaffolds: [SassScaffold],
+  bundles: [SassComponentsBundle],
 });

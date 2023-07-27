@@ -7,12 +7,15 @@ export type Formatter = (
   contents: string
 ) => string | Promise<string>;
 
+export type FilePointNamer = (componentName: string) => string;
+
 const defaultFormatter: Formatter = (_, contents: string) => contents;
 
 export type FormatOptions = {
   name: string;
   id?: string;
-  entryPoint: string;
+  entryPoint?: string | FilePointNamer;
+  exitPoint?: string | FilePointNamer | boolean;
   formatter?: Formatter;
   include?: Include | boolean;
   extname?: string;
@@ -32,7 +35,8 @@ export class Format {
   id: string;
   formatter: Formatter;
   include: Include;
-  entryPoint: string;
+  entryPoint: FilePointNamer;
+  exitPoint: FilePointNamer;
   src: {
     extname: string;
     mimeType: string;
@@ -49,6 +53,7 @@ export class Format {
       formatter = defaultFormatter,
       include = true,
       entryPoint,
+      exitPoint,
       extname,
       mimeType,
       src,
@@ -59,42 +64,83 @@ export class Format {
       throw new Error(`Loader error. No "name" specified.`);
     }
 
-    if (!entryPoint) {
-      throw new Error(`Loader error: ${name}. No "entryPoint" specified.`);
-    }
-
     this.name = name;
     this.id = id
       ? id.replace(/\W/g, "").toLowerCase()
       : name.replace(/\W/g, "").toLowerCase();
+
     this.formatter = formatter;
-    this.entryPoint = entryPoint;
 
-    const srcExtname =
-      src && src.extname ? src.extname : extname || path.extname(entryPoint);
+    this.src = { extname: "", mimeType: "" };
+    this.dist = { extname: "", mimeType: "" };
 
-    const srcMimeType =
+    const srcExtnameDef = src && src.extname ? src.extname : extname;
+
+    // Epic, terrible if statement.
+    if (srcExtnameDef && entryPoint) {
+      this.src.extname = srcExtnameDef;
+      this.entryPoint =
+        typeof entryPoint === "function" ? entryPoint : () => entryPoint;
+    } else if (srcExtnameDef && !entryPoint) {
+      this.src.extname = srcExtnameDef;
+      this.entryPoint = (componentName) => `${componentName}${srcExtnameDef}`;
+    } else if (entryPoint && !srcExtnameDef) {
+      const entryPointDef: FilePointNamer =
+        typeof entryPoint === "function" ? entryPoint : () => entryPoint;
+      this.entryPoint = entryPointDef;
+      this.src.extname = path.extname(entryPointDef("placebo"));
+    } else {
+      throw new Error(
+        `Loader error: ${name}. No inputs defined. Add an entryPoint, extname, or src to your format definition.`
+      );
+    }
+
+    this.src.mimeType =
       src && src.mimeType
         ? src.mimeType
-        : mimeType || mime.lookup(srcExtname) || "application/octet-stream";
+        : mimeType ||
+          mime.lookup(this.src.extname) ||
+          "application/octet-stream";
 
-    this.src = {
-      extname: srcExtname,
-      mimeType: srcMimeType,
-    };
+    const distExtnameDef = dist && dist.extname ? dist.extname : extname;
 
-    const distExtname =
-      dist && dist.extname ? dist.extname : extname || path.extname(entryPoint);
+    // Another awful if statement.
+    if (distExtnameDef && exitPoint) {
+      this.dist.extname = distExtnameDef;
+      this.exitPoint =
+        typeof exitPoint === "function"
+          ? exitPoint
+          : (componentName) => `${componentName}/${exitPoint}`;
+    } else if (distExtnameDef && exitPoint === false) {
+      this.dist.extname = distExtnameDef;
+      this.exitPoint = () => "";
+    } else if (
+      distExtnameDef &&
+      (exitPoint === undefined || exitPoint === true)
+    ) {
+      this.dist.extname = distExtnameDef;
+      this.exitPoint = (componentName) => `${componentName}${distExtnameDef}`;
+    } else if (exitPoint && !distExtnameDef) {
+      const exitPointDef: FilePointNamer =
+        typeof exitPoint === "function"
+          ? exitPoint
+          : (componentName) => `${componentName}/${exitPoint}`;
+      this.exitPoint = exitPointDef;
+      this.dist.extname = path.extname(exitPointDef("placebo"));
+    } else if (!distExtnameDef && exitPoint === undefined) {
+      this.dist.extname = this.src.extname;
+      this.exitPoint = (componentName) => `${componentName}${this.src.extname}`;
+    } else {
+      this.exitPoint = () => "";
+      this.dist.extname = this.src.extname;
+    }
 
-    const distMimeType =
+    this.dist.mimeType =
       dist && dist.mimeType
         ? dist.mimeType
-        : mimeType || mime.lookup(distExtname) || "application/octet-stream";
-
-    this.dist = {
-      extname: distExtname,
-      mimeType: distMimeType,
-    };
+        : mimeType ||
+          mime.lookup(this.dist.extname) ||
+          "application/octet-stream";
 
     if (include === true) {
       this.include = Include.default(this.dist.extname, this.id);

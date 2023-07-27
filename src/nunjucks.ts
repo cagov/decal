@@ -11,8 +11,7 @@ export const getEnvironment = (templatesDir: string) => {
 
 export const getRenderer =
   (nunjucksEnv: Environment) =>
-  (source: string, dir: string, data = {}) => {
+  (source: string, destination: string, data = {}) => {
     const content = nunjucksEnv.render(source, data);
-    const destination = `${dir}/${source.replace(".njk", "")}`;
     return fs.writeFile(destination, content);
   };

@@ -62,22 +62,7 @@ export class Scaffold {
     const dirName = this.dirNamer(names);
     const dirPath = `${this.collection.dir}/${dirName}`;
 
-    const workDirs = ["src", "demo"];
-
-    await fs
-      .mkdir(dirPath, { recursive: true })
-      .then(() =>
-        Promise.all(
-          workDirs.map((workDir) =>
-            fs.mkdir(`${dirPath}/${workDir}`).catch((err) => {
-              if (err.code != "EEXIST") throw err;
-            })
-          )
-        )
-      )
-      .catch((err) => {
-        if (err.code != "EEXIST") throw err;
-      });
+    await fs.mkdir(dirPath, { recursive: true });
 
     const scaffolding = Promise.resolve(
       this.scaffolder(dirPath, names, this.collection)

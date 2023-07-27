@@ -48,25 +48,11 @@ export const createRouter = (config: Config) => {
   // Set up the router to load files from each component.
   collections.forEach((collection) => {
     collection.components.forEach((component) => {
-      const componentSubFolderRoute = `${component.route}/(.*)/(.*)`;
 
       // For any component subfolders, like src, just serve the request.
-      router.get(componentSubFolderRoute, async (ctx, next) => {
+      router.get(`${component.route}/(.*)`, async (ctx, next) => {
         if (!ctx.state.filePath) {
           ctx.state.filePath = `${dirs.target}${ctx.path}`;
-        }
-
-        await next();
-      });
-
-      const componentExampleDir = `${component.dir}/demo`;
-      const componentExampleRoute = `${component.route}/(.*)`;
-
-      // For component root requests, serve from the demo folder.
-      router.get(componentExampleRoute, async (ctx, next) => {
-        if (!ctx.state.filePath) {
-          const exampleFile = ctx.path.replace(/^.+\//, "");
-          ctx.state.filePath = `${componentExampleDir}/${exampleFile}`;
         }
 
         await next();

@@ -3,6 +3,7 @@ import * as path from "path";
 import chalk from "chalk";
 import { Config } from "./config.js";
 import { FileReadError } from "./errors.js";
+import { exit } from "process";
 
 // Build and bundle CSS and JS.
 export const build = async (config: Config) => {
@@ -14,9 +15,11 @@ export const build = async (config: Config) => {
     collection.components.forEach((component) => {
       collection.formats.forEach((format) => {
         const formatter = format.formatter;
+        const entryPoint = format.entryPoint(component.name);
+        const exitPoint = format.exitPoint(component.name);
 
-        if (formatter) {
-          const filePath = `${component.dir}/src/${format.entryPoint}`;
+        if (formatter && exitPoint) {
+          const filePath = `${component.dir}/${entryPoint}`;
 
           const promise = fs
             .readFile(filePath, "utf-8")
@@ -25,11 +28,7 @@ export const build = async (config: Config) => {
             })
             .then((contents) => formatter(filePath, contents))
             .then(async (result) => {
-              const outFilePath = filePath
-                .replace(format.src.extname, format.dist.extname)
-                .replace("/src", "")
-                .replace(dirs.target, `${dirs.target}/_dist`);
-
+              const outFilePath = `${dirs.target}/_dist/${collection.dirName}/${exitPoint}`;
               const outFileDir = path.dirname(outFilePath);
 
               await fs.mkdir(outFileDir, { recursive: true });

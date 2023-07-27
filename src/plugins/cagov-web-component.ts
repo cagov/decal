@@ -46,7 +46,7 @@ export const formatter: Formatter = (filePath) =>
 
 export const EsbuildFormat = new Format({
   name: "JS/esbuild",
-  entryPoint: "index.js",
+  extname: ".js",
   formatter,
 });
 
@@ -66,12 +66,23 @@ const scaffolder: Scaffolder = async (dir, names, collection) => {
   await Promise.all([
     fs.copyFile(
       `${templatesDir}/hard-hat-bear.jpg`,
-      `${dir}/demo/hard-hat-bear.jpg`
+      `${dir}/hard-hat-bear.jpg`
     ),
-    renderToFile("index.html.njk", `${dir}/demo`, params),
-    renderToFile("index.js.njk", `${dir}/src`, params),
-    renderToFile("shadow.styles.css.njk", `${dir}/src`),
-    renderToFile("shadow.template.html.njk", `${dir}/src`, params),
+    renderToFile(
+      "index.html.njk",
+      `${dir}/${names.kebabCase}.demo.html`,
+      params
+    ),
+    renderToFile("index.js.njk", `${dir}/${names.kebabCase}.js`, params),
+    renderToFile(
+      "shadow.styles.css.njk",
+      `${dir}/${names.kebabCase}.shadow.css`
+    ),
+    renderToFile(
+      "shadow.template.html.njk",
+      `${dir}/${names.kebabCase}.shadow.html`,
+      params
+    ),
   ]);
 };
 
@@ -81,25 +92,26 @@ export const WebComponentScaffold = new Scaffold({
 
 const bundler: Bundler = async (collection) => {
   const inserts = collection.components
-    .map(
-      (component) =>
-        `import '../${component.slug}/src/${EsbuildFormat.entryPoint}';`
-    )
+    .map((component) => {
+      const entryPoint = EsbuildFormat.entryPoint(component.name);
+      return `import '../${component.slug}/${entryPoint}';`;
+    })
     .join("\n");
 
   const tempPath = `${collection.projectDir}/_temp`;
-  await fs.mkdir(tempPath);
+  await fs.mkdir(tempPath, { recursive: true });
 
   const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
   await fs.writeFile(tempFilePath, inserts);
 
   const bundleResult = await formatter(tempFilePath, inserts);
+  const bundleContent = `// Signature\n${bundleResult}`;
 
   const bundlePath = `${collection.projectDir}/_dist/bundles`;
   await fs.mkdir(bundlePath, { recursive: true });
 
   const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.js`;
-  await fs.writeFile(bundleFilePath, bundleResult);
+  await fs.writeFile(bundleFilePath, bundleContent);
 };
 
 export const WebComponentBundle = new Bundle("Web Components Bundle", bundler);

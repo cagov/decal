@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Components Digest</title>
     <link id="template-base-css" rel="stylesheet" href="/assets/base-css.scss"/>
+    <style>
+      h2 {
+        background: darkslategrey;
+        color: white;
+        padding: 1rem;
+      }
+      div.component {
+        margin: 0 2rem;
+      }
+    </style>
   </head>
   <body>
     <main style="margin: 2rem;">
@@ -13,12 +23,14 @@
       {% for collection in collections %}
         <h2>{{ collection.name }}</h2>
         {% for component in collection.components %}
-          <h3>{{ component.name }}</h3>
-          {% for file in component.files %}
-            <p>
-              <a href="{{ component.route }}/{{ file }}">{{ file }}</a>
-            </p>
-          {% endfor %}
+          <div class="component">
+            <h3>{{ component.name }}</h3>
+            {% for file in component.files %}
+              <p>
+                <a href="{{ component.route }}/{{ file }}">{{ file }}</a>
+              </p>
+            {% endfor %}
+          </div>
         {% endfor %}
       {% else %}
         <p>No components found</p>

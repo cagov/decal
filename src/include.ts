@@ -22,13 +22,13 @@ export class Include {
       return new Include(
         "JavaScript",
         id,
-        (input) => `<script type="module" src="src/${input}"></script>`
+        (input) => `<script type="module" src="${input}"></script>`
       );
     } else if (extname.endsWith(".css")) {
       return new Include(
         "CSS",
         id,
-        (input) => `<link rel="stylesheet" href="src/${input}" />`
+        (input) => `<link rel="stylesheet" href="${input}" />`
       );
     } else {
       return new Include("Empty");
