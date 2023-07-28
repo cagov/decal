@@ -3,7 +3,6 @@ import * as path from "path";
 import chalk from "chalk";
 import { Config } from "./config.js";
 import { FileReadError } from "./errors.js";
-import { exit } from "process";
 
 // Build and bundle CSS and JS.
 export const build = async (config: Config) => {

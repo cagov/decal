@@ -6,7 +6,6 @@ import { serve } from "./serve.js";
 import { build } from "./build.js";
 import { Scaffold } from "./scaffold.js";
 import { newProject } from "./new-project.js";
-import { newConfig } from "./new-config.js";
 
 /**
  * Adds common CLI-option configurations to any yargs CLI command.
@@ -95,7 +94,7 @@ yargs(hideBin(process.argv))
           (y) => y,
           async (argv) => {
             const config = await Config.new(argv.dir, argv.conf);
-            await newConfig(config);
+            await config.write();
             process.exit(0);
           }
         )

@@ -95,4 +95,29 @@ export class Config {
   addPlugin(callback: (decalConfig: Config) => void) {
     callback(this);
   }
+
+  async write() {
+    const configFilePath = `${this.dirs.target}/decal.config.js`;
+
+    const existingFile = await fs
+      .readFile(configFilePath, "utf-8")
+      .catch(() => undefined);
+
+    if (existingFile) {
+      console.log("Config file already exists.");
+      console.log(configFilePath);
+      console.log("Consider renaming this file if you want to start fresh.");
+      return;
+    }
+
+    const defaultConfigFile = await fs.readFile(
+      `${this.dirs.templates}/init/default.decal.config.js`,
+      "utf-8"
+    );
+
+    await fs.writeFile(configFilePath, defaultConfigFile);
+
+    console.log("Config file initialized.");
+    console.log(configFilePath);
+  }
 }
