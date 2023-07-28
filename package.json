@@ -8,7 +8,10 @@
   },
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npx tsc && node dist/index.js build -d throwaway/example-component-library",
+    "bundle": "npx tsc && node dist/index.js bundle -d throwaway/example-component-library",
+    "new": "npx tsc && node dist/index.js new component -d throwaway/example-component-library",
+    "serve": "npx tsc && node dist/index.js serve -d throwaway/example-component-library"
   },
   "author": "@cagov",
   "license": "MIT",

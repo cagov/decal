@@ -56,14 +56,14 @@ const bundler: Bundler = async (collection) => {
   const inserts = collection.components
     .map((component) => {
       const entryPoint = ReactFormat.entryPoint(component.name);
-      return `import '../${component.slug}/${entryPoint}';`;
+      return `import ${component.name} from '../${component.slug}/${entryPoint}';`;
     })
     .join("\n");
 
   const tempPath = `${collection.projectDir}/_temp`;
   await fs.mkdir(tempPath, { recursive: true });
 
-  const tempFilePath = `${tempPath}/${collection.dirName}.react.bundle.js`;
+  const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
   await fs.writeFile(tempFilePath, inserts);
 
   const bundleResult = await formatter(tempFilePath, inserts);
@@ -72,7 +72,7 @@ const bundler: Bundler = async (collection) => {
   const bundlePath = `${collection.projectDir}/_dist/bundles`;
   await fs.mkdir(bundlePath, { recursive: true });
 
-  const bundleFilePath = `${bundlePath}/${collection.dirName}.react.bundle.js`;
+  const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.js`;
   await fs.writeFile(bundleFilePath, bundleContent);
 };
 
