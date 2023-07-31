@@ -1,10 +1,10 @@
 import glob from "glob";
-import { Config } from "../config.js";
 import { DefaultContext } from "koa";
 import { getEnvironment } from "../nunjucks.js";
+import { Project } from "../project.js";
 
-export const createDigestHandler = (config: Config) => {
-  const { dirs, collections } = config;
+export const createDigestHandler = (project: Project) => {
+  const { dirs, collections } = project;
 
   const templatesDir = `${dirs.templates}/serve`;
   const nunjucksEnv = getEnvironment(templatesDir);

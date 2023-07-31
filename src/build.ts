@@ -6,11 +6,11 @@ import { FileReadError } from "./errors.js";
 
 // Build and bundle CSS and JS.
 export const build = async (config: Config) => {
-  const { dirs, collections } = config;
+  const { project } = config;
 
   const builders: Promise<void>[] = [];
 
-  collections.forEach((collection) => {
+  project.collections.forEach((collection) => {
     collection.components.forEach((component) => {
       collection.formats.forEach((format) => {
         const formatter = format.formatter;
@@ -27,14 +27,13 @@ export const build = async (config: Config) => {
             })
             .then((contents) => formatter(filePath, contents))
             .then(async (result) => {
-              const outFilePath = `${dirs.target}/_dist/${collection.dirName}/${exitPoint}`;
-              const outFileDir = path.dirname(outFilePath);
+              const outFile = `${project.dir}/_dist/${collection.dirName}/${exitPoint}`;
+              const outDir = path.dirname(outFile);
 
-              await fs.mkdir(outFileDir, { recursive: true });
-              return fs.writeFile(outFilePath, result).then(() => {
-                console.log(
-                  `${chalk.magenta(format.name)}: ${dirs.relative(outFilePath)}`
-                );
+              await fs.mkdir(outDir, { recursive: true });
+              return fs.writeFile(outFile, result).then(() => {
+                const loggablePath = project.dirs.relative(outFile);
+                console.log(`${chalk.magenta(format.name)}: ${loggablePath}`);
               });
             })
             .catch((err) => {
@@ -49,11 +48,11 @@ export const build = async (config: Config) => {
     });
   });
 
-  const buildPath = dirs.relative(dirs.target);
+  const buildPath = project.dirs.relative(project.dir);
 
   console.log("Entering build mode");
-  console.log(`Sourcing from ${dirs.relative(dirs.target)}`);
-  console.log(`Building to ${dirs.relative(dirs.target)}/_dist\n`);
+  console.log(`Sourcing from ${project.dirs.relative(project.dir)}`);
+  console.log(`Building to ${project.dirs.relative(project.dir)}/_dist\n`);
 
   await Promise.all(builders);
 };

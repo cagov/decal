@@ -11,8 +11,7 @@ const templatesDir = `templates/scaffold/cagov-react-companion`;
 const nunjucksEnv = getEnvironment(templatesDir);
 const renderToFile = getRenderer(nunjucksEnv);
 
-export const ReactFormat = new Format({
-  name: "JSX/esbuild",
+export const ReactFormat = new Format("JSX/esbuild", {
   src: { extname: ".jsx" },
   dist: { extname: ".js" },
   formatter: formatter,
@@ -40,14 +39,12 @@ export const scaffolder: Scaffolder = async (dir, names, collection) => {
   ]);
 };
 
-export const ReactFromWebComponentScaffold = new Scaffold({
-  name: "React from Web Component",
+export const ReactScaffoldWC = new Scaffold("React from Web Component", {
   dirNamer: (names) => names.camelCase,
   scaffolder,
 });
 
-export const ReactFromScratchScaffold = new Scaffold({
-  name: "React from scratch",
+export const ReactScaffoldScratch = new Scaffold("React from scratch", {
   dirNamer: (names) => names.camelCase,
   scaffolder,
 });
@@ -60,7 +57,7 @@ const bundler: Bundler = async (collection) => {
     })
     .join("\n");
 
-  const tempPath = `${collection.projectDir}/_temp`;
+  const tempPath = `${collection.project.dir}/_temp`;
   await fs.mkdir(tempPath, { recursive: true });
 
   const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
@@ -69,7 +66,7 @@ const bundler: Bundler = async (collection) => {
   const bundleResult = await formatter(tempFilePath, inserts);
   const bundleContent = `${bundleResult}`;
 
-  const bundlePath = `${collection.projectDir}/_dist/bundles`;
+  const bundlePath = `${collection.project.dir}/_dist/bundles`;
   await fs.mkdir(bundlePath, { recursive: true });
 
   const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.js`;
@@ -78,9 +75,8 @@ const bundler: Bundler = async (collection) => {
 
 export const ReactBundle = new Bundle("React Components Bundle", bundler);
 
-export const ReactCollection = new Collection({
-  name: "React Components",
+export const ReactCollection = new Collection("React Components", {
   formats: [ReactFormat],
-  scaffolds: [ReactFromWebComponentScaffold, ReactFromScratchScaffold],
+  scaffolds: [ReactScaffoldWC, ReactScaffoldScratch],
   bundles: [ReactBundle],
 });

@@ -2,7 +2,7 @@ import chokidar from "chokidar";
 import chalk from "chalk";
 import events from "events";
 import { DefaultContext } from "koa";
-import { Config } from "../config";
+import { Project } from "../project";
 
 /**
  * This is the watcher. It watches the component's files for changes.
@@ -12,15 +12,11 @@ import { Config } from "../config";
  *
  * The export is a Koa router, which should be installed in the Koa app.
  */
-export const createWatcher = (config: Config) => {
-  const {
-    dirs: { target },
-  } = config;
-
+export const createWatcher = (project: Project) => {
   const eventEmitter = new events.EventEmitter();
 
   // Watches for file changes.
-  const watcher = chokidar.watch(target, {
+  const watcher = chokidar.watch(project.dir, {
     ignored: "**/node_modules/**",
     ignoreInitial: true,
   });

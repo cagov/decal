@@ -5,7 +5,7 @@ import { Config } from "./config.js";
 import { serve } from "./serve.js";
 import { build } from "./build.js";
 import { Scaffold } from "./scaffold.js";
-import { newProject } from "./new-project.js";
+import { Project } from "./project.js";
 
 /**
  * Adds common CLI-option configurations to any yargs CLI command.
@@ -41,7 +41,7 @@ yargs(hideBin(process.argv))
       }),
     async (argv) => {
       const config = await Config.new(argv.dir, argv.conf);
-      serve(config, argv.port);
+      serve(config.project, argv.port);
     }
   )
   .command(
@@ -62,7 +62,7 @@ yargs(hideBin(process.argv))
       const config = await Config.new(argv.dir, argv.conf);
       const bundlings: Promise<void>[] = [];
 
-      config.collections.forEach((collection) => {
+      config.project.collections.forEach((collection) => {
         collection.bundles.forEach(async (bundle) => {
           const bundling = bundle.make(collection);
           bundlings.push(bundling);
@@ -84,7 +84,8 @@ yargs(hideBin(process.argv))
           "Create a Decal project from scratch.",
           (y) => y,
           async (argv) => {
-            await newProject();
+            const responses = await Project.prompt();
+            await Project.make(responses);
             process.exit(0);
           }
         )
@@ -104,7 +105,7 @@ yargs(hideBin(process.argv))
           (y) => y,
           async (argv) => {
             const config = await Config.new(argv.dir, argv.conf);
-            await Scaffold.prompt(config);
+            await Scaffold.prompt(config.project);
             process.exit(0);
           }
         )

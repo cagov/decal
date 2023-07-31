@@ -5,22 +5,22 @@ import websockify from "koa-websocket";
 import chalk from "chalk";
 import { createRouter } from "./serve/router.js";
 import { createWatcher } from "./serve/watcher.js";
-import { Config } from "./config.js";
+import { Project } from "./project.js";
 
-export const serve = (config: Config, port: number) => {
-  const { dirs, collections } = config;
+export const serve = (project: Project, port: number) => {
+  const { dirs, collections } = project;
 
   // Initialize a websockets-enabled Koa app.
   const app = websockify(new Koa());
 
   // Initialize the websockets watcher. Add it to the Koa app.
-  const watcher = createWatcher(config);
+  const watcher = createWatcher(project);
   app.ws.use(watcher);
 
   app.use(koaMount("/", serveStatic(dirs.target, { defer: true })));
 
   // This is where Base CSS expects to find fonts.
-  // Can't be helped here, it's hard-coded in the Design System.
+  // Can't be helped here, it's hard-coded in the alpha Design System.
   const fontsDir = `${dirs.templates}/fonts`;
   app.use(koaMount("/fonts", serveStatic(fontsDir)));
 
@@ -36,7 +36,7 @@ export const serve = (config: Config, port: number) => {
   });
 
   // Create the router for our components.
-  const router = createRouter(config);
+  const router = createRouter(project);
 
   // Start up the app!
   app.use(router.routes());

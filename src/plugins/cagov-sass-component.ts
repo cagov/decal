@@ -39,8 +39,7 @@ const formatter: Formatter = (filePath) =>
       return "/* There are errors in this file. Check your Decal console. */";
     });
 
-export const SassFormat = new Format({
-  name: "CSS/Sass",
+export const SassFormat = new Format("CSS/Sass", {
   entryPoint: (componentName) => `src/${componentName}.scss`,
   src: { extname: ".scss" },
   dist: { extname: ".css" },
@@ -67,8 +66,7 @@ const SassScaffolder: Scaffolder = async (dir, names, collection) => {
   ]);
 };
 
-export const SassScaffold = new Scaffold({
-  name: "Standard Sass",
+export const SassScaffold = new Scaffold("Standard Sass", {
   scaffolder: SassScaffolder,
 });
 
@@ -80,7 +78,7 @@ const bundler: Bundler = async (collection) => {
     })
     .join("\n");
 
-  const tempPath = `${collection.projectDir}/_temp`;
+  const tempPath = `${collection.project.dir}/_temp`;
   await fs.mkdir(tempPath, { recursive: true });
 
   const tempFilePath = `${tempPath}/${collection.dirName}.bundle.scss`;
@@ -89,7 +87,7 @@ const bundler: Bundler = async (collection) => {
   const bundleResult = await formatter(tempFilePath, inserts);
   const bundleContent = bundleResult;
 
-  const bundlePath = `${collection.projectDir}/_dist/bundles`;
+  const bundlePath = `${collection.project.dir}/_dist/bundles`;
   await fs.mkdir(bundlePath, { recursive: true });
 
   const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.css`;
@@ -101,8 +99,7 @@ export const SassComponentsBundle = new Bundle(
   bundler
 );
 
-export const SassCollection = new Collection({
-  name: "Sass Styles",
+export const SassCollection = new Collection("Sass Styles", {
   formats: [SassFormat],
   scaffolds: [SassScaffold],
   bundles: [SassComponentsBundle],

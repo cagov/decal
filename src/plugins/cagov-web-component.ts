@@ -44,8 +44,7 @@ export const formatter: Formatter = (filePath) =>
       return "// There are errors in this file. Check your Decal console.";
     });
 
-export const EsbuildFormat = new Format({
-  name: "JS/esbuild",
+export const EsbuildFormat = new Format("JS/esbuild", {
   extname: ".js",
   formatter,
 });
@@ -86,8 +85,7 @@ const scaffolder: Scaffolder = async (dir, names, collection) => {
   ]);
 };
 
-export const WebComponentScaffold = new Scaffold({
-  name: "Standard Web Component",
+export const WebComponentScaffold = new Scaffold("Standard Web Component", {
   scaffolder,
 });
 
@@ -99,7 +97,7 @@ const bundler: Bundler = async (collection) => {
     })
     .join("\n");
 
-  const tempPath = `${collection.projectDir}/_temp`;
+  const tempPath = `${collection.project.dir}/_temp`;
   await fs.mkdir(tempPath, { recursive: true });
 
   const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
@@ -108,7 +106,7 @@ const bundler: Bundler = async (collection) => {
   const bundleResult = await formatter(tempFilePath, inserts);
   const bundleContent = `// Signature\n${bundleResult}`;
 
-  const bundlePath = `${collection.projectDir}/_dist/bundles`;
+  const bundlePath = `${collection.project.dir}/_dist/bundles`;
   await fs.mkdir(bundlePath, { recursive: true });
 
   const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.js`;
@@ -117,8 +115,7 @@ const bundler: Bundler = async (collection) => {
 
 export const WebComponentBundle = new Bundle("Web Components Bundle", bundler);
 
-export const WebComponentCollection = new Collection({
-  name: "Web Components",
+export const WebComponentCollection = new Collection("Web Components", {
   formats: [EsbuildFormat],
   scaffolds: [WebComponentScaffold],
   bundles: [WebComponentBundle],

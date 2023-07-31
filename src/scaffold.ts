@@ -1,7 +1,7 @@
-import { Collection } from "./collection.js";
+import { ProjectCollection } from "./collection.js";
 import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
-import { Config } from "./config.js";
+import { Project } from "./project.js";
 
 export type ScaffoldNames = {
   plainCase: string;
@@ -13,13 +13,13 @@ export type ScaffoldNames = {
 export type Scaffolder = (
   dir: string,
   names: ScaffoldNames,
-  collection: Collection
+  collection: ProjectCollection
 ) => void;
 
 export type ScaffoldDirNamer = (names: ScaffoldNames) => string;
 
 export type ScaffoldOptions = {
-  name: string;
+  name?: string;
   dirNamer?: ScaffoldDirNamer;
   scaffolder: Scaffolder;
 };
@@ -30,19 +30,16 @@ export class Scaffold {
   name: string;
   dirNamer: ScaffoldDirNamer;
   scaffolder: Scaffolder;
-  collection: Collection;
 
-  constructor(options: ScaffoldOptions) {
-    const { name, dirNamer = defaultDirname, scaffolder } = options;
+  constructor(name: string, options: ScaffoldOptions) {
+    const { dirNamer = defaultDirname, scaffolder } = options;
 
     this.name = name;
     this.dirNamer = dirNamer;
     this.scaffolder = scaffolder;
-
-    this.collection = new Collection({ name: "Default" });
   }
 
-  async make(newComponentName: string) {
+  async make(newComponentName: string, collection: ProjectCollection) {
     const kebabCase = newComponentName.toLowerCase().replaceAll(" ", "-");
     const snakeCase = newComponentName.toLowerCase().replaceAll(" ", "_");
     const camelCase = newComponentName
@@ -58,19 +55,19 @@ export class Scaffold {
     };
 
     const dirName = this.dirNamer(names);
-    const dirPath = `${this.collection.dir}/${dirName}`;
+    const dirPath = `${collection.dir}/${dirName}`;
 
     await fs.mkdir(dirPath, { recursive: true });
 
     const scaffolding = Promise.resolve(
-      this.scaffolder(dirPath, names, this.collection)
+      this.scaffolder(dirPath, names, collection)
     );
 
     return scaffolding;
   }
 
-  static async prompt(config: Config) {
-    const { collections } = config;
+  static async prompt(project: Project) {
+    const { collections } = project;
 
     const questions: PromptObject<string>[] = [
       {
@@ -109,6 +106,8 @@ export class Scaffold {
     const collection = responses.collection || collections[0];
     const scaffold = responses.scaffold || collection.scaffolds[0];
 
-    if (newComponentName && scaffold) await scaffold.make(newComponentName);
+    if (newComponentName && scaffold) {
+      await scaffold.make(newComponentName, collection);
+    }
   }
 }

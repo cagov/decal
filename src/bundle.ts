@@ -1,6 +1,6 @@
-import { Collection } from "./collection.js";
+import { ProjectCollection } from "./collection.js";
 
-export type Bundler = (collection: Collection) => void | Promise<void>;
+export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
 
 export class Bundle {
   name: string;
@@ -11,7 +11,7 @@ export class Bundle {
     this.bundler = bundler;
   }
 
-  async make(collection: Collection) {
+  async make(collection: ProjectCollection) {
     const bundling = Promise.resolve(this.bundler(collection));
     return bundling;
   }

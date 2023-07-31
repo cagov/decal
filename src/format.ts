@@ -12,7 +12,7 @@ export type FilePointNamer = (componentName: string) => string;
 const defaultFormatter: Formatter = (_, contents: string) => contents;
 
 export type FormatOptions = {
-  name: string;
+  name?: string;
   id?: string;
   entryPoint?: string | FilePointNamer;
   exitPoint?: string | FilePointNamer | boolean;
@@ -46,9 +46,8 @@ export class Format {
     mimeType: string;
   };
 
-  constructor(options: FormatOptions) {
+  constructor(name: string, options: FormatOptions) {
     const {
-      name,
       id,
       formatter = defaultFormatter,
       include = true,

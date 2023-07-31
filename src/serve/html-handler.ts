@@ -1,10 +1,9 @@
 import nunjucks, { Template, render } from "nunjucks";
 import * as path from "path";
 import { promises as fs } from "fs";
-import { Config } from "../config.js";
 import { DefaultContext } from "koa";
 import { getEnvironment } from "../nunjucks.js";
-import { Includer } from "../include.js";
+import { Project } from "../project.js";
 
 type RenderAttributes = {
   content?: Template;
@@ -12,8 +11,8 @@ type RenderAttributes = {
   includeTags: string[];
 };
 
-export const createHtmlHandler = (config: Config) => {
-  const { dirs, collections } = config;
+export const createHtmlHandler = (project: Project) => {
+  const { dirs, collections } = project;
 
   const templatesDir = `${dirs.templates}/serve`;
   const nunjucksEnv = getEnvironment(templatesDir);

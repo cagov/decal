@@ -3,12 +3,12 @@ import chalk from "chalk";
 import { promises as fs } from "fs";
 import { createHtmlHandler } from "./html-handler.js";
 import { createDigestHandler } from "./digest-handler.js";
-import { Config } from "../config.js";
 import { Format } from "../format.js";
 import { FileReadError } from "../errors.js";
+import { Project } from "../project.js";
 
-export const createRouter = (config: Config) => {
-  const { dirs, collections } = config;
+export const createRouter = (project: Project) => {
+  const { dirs, collections } = project;
 
   const router = new Router();
 
@@ -18,7 +18,7 @@ export const createRouter = (config: Config) => {
   */
 
   // The digest file lists all example HTML files found by the tool.
-  const digestHandler = createDigestHandler(config);
+  const digestHandler = createDigestHandler(project);
   router.get(["/", "/index.html"], digestHandler);
 
   /* 
@@ -48,7 +48,6 @@ export const createRouter = (config: Config) => {
   // Set up the router to load files from each component.
   collections.forEach((collection) => {
     collection.components.forEach((component) => {
-
       // For any component subfolders, like src, just serve the request.
       router.get(`${component.route}/(.*)`, async (ctx, next) => {
         if (!ctx.state.filePath) {
@@ -101,7 +100,7 @@ export const createRouter = (config: Config) => {
   */
 
   // Handle templated HTML.
-  const htmlHandler = createHtmlHandler(config);
+  const htmlHandler = createHtmlHandler(project);
   router.get("/(.*).html", htmlHandler);
 
   // Create a route for the given loader.

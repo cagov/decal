@@ -1,13 +1,13 @@
-import { Collection } from "./collection.js";
+import { ProjectCollection } from "./collection.js";
 
 export class Component {
   name: string;
   dir: string;
   slug: string;
   route: string;
-  collection: Collection;
+  collection: ProjectCollection;
 
-  constructor(dir: string, collection: Collection) {
+  constructor(dir: string, collection: ProjectCollection) {
     this.dir = dir;
     this.name = dir.replace(/^.+\//, "");
     this.slug = `${collection.dirName}/${this.name}`;
