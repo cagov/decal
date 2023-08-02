@@ -8,17 +8,27 @@ import { Project } from "./project.js";
 import defaultProjectConfig from "./plugins/default-project.js";
 
 /**
- * The Config object accepts the user's CLI arguments, examines the environment,
- * and prepares the runtime for requested tasks.
+ * *Config* collects each Decal project's configuration files and processes them.
  */
 export class Config {
+  /** The overall Decal *Project* as defined by configuration. */
   project: Project;
 
+  /**
+   * @param dir The directory that contains your Decal project.
+   */
   constructor(dir: string) {
     this.project = new Project(dir);
   }
 
-  static async new(dir: string, conf: string) {
+  /**
+   * *Config.new* allows us to create a new instance while using async/await.
+   * Use this instead of the typical *let config = new Config(...)* JS syntax.
+   * @param dir The directory that contains your Decal project.
+   * @param conf The path to your decal.config.js file.
+   * @returns A Promise for a complete *Config* object.
+   */
+  static async new(dir: string, conf: string): Promise<Config> {
     const config = new Config(dir);
 
     const confFile = conf.startsWith("/")
@@ -35,12 +45,23 @@ export class Config {
     return config;
   }
 
+  /**
+   * Create a new *Collection* and add it to this Decal project.
+   * @param name The name of your new collection.
+   * @param options A *CollectionOptions* object to configure your new collection.
+   */
   createCollection(name: string, options: CollectionOptions) {
     const collection = new Collection(name, options);
     const collectionEx = new ProjectCollection(name, collection, this.project);
     this.project.collections.push(collectionEx);
   }
 
+  /**
+   * Import an existing *Collection* into this Decal project.
+   * This is useful when importing a Collection definition from NPM or another file.
+   * @param collection The *Collection* object you wish to import.
+   * @param options A partial *CollectionOptions* object with any properties you wish to override on the imported collection.
+   */
   applyCollection(collection: Collection, options: Partial<CollectionOptions>) {
     collection.applyOptions(options);
     const collectionEx = new ProjectCollection(
@@ -51,10 +72,17 @@ export class Config {
     this.project.collections.push(collectionEx);
   }
 
+  /**
+   * Imports another Decal configuration into this project.
+   * @param callback Your imported Decal configuration function, taking the form of *(decalConfig) => {}*.
+   */
   addPlugin(callback: (decalConfig: Config) => void) {
     callback(this);
   }
 
+  /**
+   * Write a new Decal configuration file, *decal.config.js*, to the project root folder.
+   */
   async write() {
     const configFilePath = `${this.project.dir}/decal.config.js`;
 

@@ -76,6 +76,7 @@ export class Format {
     const srcExtnameDef = src && src.extname ? src.extname : extname;
 
     // Epic, terrible if statement.
+    // The goal here is to derive useful defaults based on what we get.
     if (srcExtnameDef && entryPoint) {
       this.src.extname = srcExtnameDef;
       this.entryPoint =
@@ -104,6 +105,7 @@ export class Format {
     const distExtnameDef = dist && dist.extname ? dist.extname : extname;
 
     // Another awful if statement.
+    // Again, we're extracting defaults for incomplete configs.
     if (distExtnameDef && exitPoint) {
       this.dist.extname = distExtnameDef;
       this.exitPoint =

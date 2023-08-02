@@ -32,6 +32,10 @@ export class Collection {
   /** A list of *Bundle* objects that define how this collection is packaged for publication. */
   bundles: Bundle[];
 
+  /**
+   * @param name The descriptive name for this collection.
+   * @param options A *CollectionOptions* object to configure this collection.
+   */
   constructor(name = "My Collection", options: CollectionOptions = {}) {
     const {
       formats = [],
@@ -66,13 +70,18 @@ export class Collection {
 }
 
 /**
- * *CollectionEx* is a *Collection* that's "hydrated" by a Decal project.
+ * *ProjectCollection* is a *Collection* that's "hydrated" by a Decal project.
  * It includes additional methods, including access to the overall *Project* definiton.
  */
 export class ProjectCollection extends Collection {
   /** The Decal project to which this collection belongs. */
   project: Project;
 
+  /**
+   * @param name The descriptive name for this collection.
+   * @param collection The *Collection* we need to adopt into this project.
+   * @param project The overall Decal *Project*.
+   */
   constructor(name: string, collection: Collection, project: Project) {
     super(name);
 
@@ -86,12 +95,12 @@ export class ProjectCollection extends Collection {
   }
 
   /** The directory where this collection resides. */
-  get dir() {
+  get dir(): string {
     return `${this.project.dir}/${this.dirName}`;
   }
 
   /** The components available to this collection. */
-  get components() {
+  get components(): Component[] {
     return glob
       .sync(`${this.dir}/*`)
       .filter((globDir) => !globDir.includes("node_modules"))
