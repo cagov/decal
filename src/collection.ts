@@ -1,14 +1,10 @@
 import glob from "glob";
-import { Format } from "./format.js";
-import { Scaffold } from "./scaffold.js";
-import { Component } from "./component.js";
+import { Component, ProjectComponent } from "./component.js";
 import { Include } from "./include.js";
 import { Bundle } from "./bundle.js";
 import { Project } from "./project.js";
 
 export type CollectionOptions = {
-  formats?: Format[];
-  scaffolds?: Scaffold[];
   includes?: Include[];
   bundles?: Bundle[];
   dirName?: string;
@@ -23,10 +19,8 @@ export class Collection {
   name: string;
   /** The folder name for this collection within the project. */
   dirName: string;
-  /** A list of *Format* objects that define file formats across the collection. */
-  formats: Format[];
-  /** A list of *Scaffold* objects that define how new components are constructed. */
-  scaffolds: Scaffold[];
+  /** The definition for components of this collection. */
+  componentDef: Component;
   /** A list of *Include* objects that define how this collection loads in development. */
   includes: Include[];
   /** A list of *Bundle* objects that define how this collection is packaged for publication. */
@@ -34,24 +28,23 @@ export class Collection {
 
   /**
    * @param name The descriptive name for this collection.
+   * @param componentDef The definition for components of this collection.
    * @param options A *CollectionOptions* object to configure this collection.
    */
-  constructor(name = "My Collection", options: CollectionOptions = {}) {
-    const {
-      formats = [],
-      scaffolds = [],
-      includes = [],
-      bundles = [],
-      dirName,
-    } = options;
+  constructor(
+    name: string,
+    componentDef: Component,
+    options: CollectionOptions = {}
+  ) {
+    const { includes = [], bundles = [], dirName } = options;
 
     this.name = name;
     this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
 
+    this.componentDef = componentDef;
+
     this.includes = includes;
     this.bundles = bundles;
-    this.formats = formats;
-    this.scaffolds = scaffolds;
   }
 
   /**
@@ -59,13 +52,11 @@ export class Collection {
    * @param options A *CollectionOptions* object with overrides.
    */
   applyOptions(options: CollectionOptions) {
-    const { formats, scaffolds, includes, bundles, dirName } = options;
+    const { includes, bundles, dirName } = options;
 
     if (dirName) this.dirName = dirName;
-    if (formats) this.formats = formats;
     if (includes) this.includes = includes;
     if (bundles) this.bundles = bundles;
-    if (scaffolds) this.scaffolds = scaffolds;
   }
 }
 
@@ -82,16 +73,13 @@ export class ProjectCollection extends Collection {
    * @param collection The *Collection* we need to adopt into this project.
    * @param project The overall Decal *Project*.
    */
-  constructor(name: string, collection: Collection, project: Project) {
-    super(name);
+  constructor(collection: Collection, project: Project) {
+    super(collection.name, collection.componentDef);
 
     this.project = project;
     this.dirName = collection.dirName;
-
     this.includes = collection.includes;
     this.bundles = collection.bundles;
-    this.formats = collection.formats;
-    this.scaffolds = collection.scaffolds;
   }
 
   /** The directory where this collection resides. */
@@ -100,12 +88,17 @@ export class ProjectCollection extends Collection {
   }
 
   /** The components available to this collection. */
-  get components(): Component[] {
+  get components(): ProjectComponent[] {
     return glob
       .sync(`${this.dir}/*`)
       .filter((globDir) => !globDir.includes("node_modules"))
       .map((componentDir) => {
-        const component = new Component(componentDir, this);
+        const component = new ProjectComponent(
+          componentDir.replace(`${this.dir}/`, ""),
+          this.componentDef,
+          this.project,
+          this
+        );
         return component;
       });
   }

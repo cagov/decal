@@ -6,6 +6,7 @@ import { Format } from "../format.js";
 import { Scaffold, Scaffolder } from "../scaffold.js";
 import { Bundle, Bundler } from "../bundle.js";
 import { Collection } from "../collection.js";
+import { Component } from "../component.js";
 
 const templatesDir = `templates/scaffold/cagov-react-companion`;
 const nunjucksEnv = getEnvironment(templatesDir);
@@ -18,24 +19,28 @@ export const ReactFormat = new Format("JSX/esbuild", {
   include: false,
 });
 
-export const scaffolder: Scaffolder = async (dir, names, collection) => {
+export const scaffolder: Scaffolder = async (component, names) => {
   const params = {
     names,
-    collection,
+    component,
   };
 
   await Promise.all([
     renderToFile(
       "react-example.html.njk",
-      `${dir}/${names.camelCase}.demo.html`,
+      `${component.dir}/${names.camelCase}.demo.html`,
       params
     ),
     renderToFile(
       "react-example.jsx.njk",
-      `${dir}/${names.camelCase}.demo.jsx`,
+      `${component.dir}/${names.camelCase}.demo.jsx`,
       params
     ),
-    renderToFile("react.jsx.njk", `${dir}/${names.camelCase}.jsx`, params),
+    renderToFile(
+      "react.jsx.njk",
+      `${component.dir}/${names.camelCase}.jsx`,
+      params
+    ),
   ]);
 };
 
@@ -52,8 +57,8 @@ export const ReactScaffoldScratch = new Scaffold("React from scratch", {
 const bundler: Bundler = async (collection) => {
   const inserts = collection.components
     .map((component) => {
-      const entryPoint = ReactFormat.entryPoint(component.name);
-      return `import ${component.name} from '../${component.slug}/${entryPoint}';`;
+      const entryPoint = ReactFormat.entryPoint(component.dirName);
+      return `import ${component.dirName} from '../${component.slug}/${entryPoint}';`;
     })
     .join("\n");
 
@@ -75,8 +80,11 @@ const bundler: Bundler = async (collection) => {
 
 export const ReactBundle = new Bundle("React Components Bundle", bundler);
 
-export const ReactCollection = new Collection("React Components", {
+export const ReactDef = new Component("React Components", {
   formats: [ReactFormat],
   scaffolds: [ReactScaffoldWC, ReactScaffoldScratch],
+});
+
+export const ReactCollection = new Collection("React Components", ReactDef, {
   bundles: [ReactBundle],
 });

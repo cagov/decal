@@ -12,10 +12,10 @@ export const build = async (config: Config) => {
 
   project.collections.forEach((collection) => {
     collection.components.forEach((component) => {
-      collection.formats.forEach((format) => {
+      component.formats.forEach((format) => {
         const formatter = format.formatter;
-        const entryPoint = format.entryPoint(component.name);
-        const exitPoint = format.exitPoint(component.name);
+        const entryPoint = format.entryPoint(component.dirName);
+        const exitPoint = format.exitPoint(component.dirName);
 
         if (formatter && exitPoint) {
           const filePath = `${component.dir}/${entryPoint}`;

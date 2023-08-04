@@ -21,13 +21,13 @@
     <main style="margin: 2rem;">
       <h1>The Digest</h1>
       {% for collection in collections %}
-        <h2>{{ collection.name }}</h2>
+        <h2>{{ collection.def.name }}</h2>
         {% for component in collection.components %}
           <div class="component">
-            <h3>{{ component.name }}</h3>
+            <h3>{{ component.def.dirName }}</h3>
             {% for file in component.files %}
               <p>
-                <a href="{{ component.route }}/{{ file }}">{{ file }}</a>
+                <a href="{{ component.def.route }}/{{ file }}">{{ file }}</a>
               </p>
             {% endfor %}
           </div>

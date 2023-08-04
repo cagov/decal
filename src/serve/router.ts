@@ -74,7 +74,7 @@ export const createRouter = (project: Project) => {
 
   // Set up the router to perform the following actions against all requests.
   const loaderRoutes = collections
-    .flatMap((collection) => collection.formats)
+    .flatMap((collection) => collection.componentDef.formats)
     .map((format) => `/(.*)${format.src.extname}`)
     .sort((a, b) => b.length - a.length);
 
@@ -138,7 +138,7 @@ export const createRouter = (project: Project) => {
 
   // Create collection-specific routes for each loader in each collection.
   collections.forEach((collection) => {
-    collection.formats
+    collection.componentDef.formats
       .sort((a, b) => b.src.extname.length - a.src.extname.length)
       .forEach((format) => {
         const route = `/${collection.name}/(.*)${format.src.extname}`;
@@ -148,7 +148,7 @@ export const createRouter = (project: Project) => {
 
   // Create generic, fall-back routes for every loader, across all collections.
   collections
-    .flatMap((collection) => collection.formats)
+    .flatMap((collection) => collection.componentDef.formats)
     .sort((a, b) => b.src.extname.length - a.src.extname.length)
     .forEach((format) => {
       const route = `/(.*)${format.src.extname}`;

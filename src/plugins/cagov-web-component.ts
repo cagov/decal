@@ -6,6 +6,7 @@ import { Format, Formatter } from "../format.js";
 import { Collection } from "../collection.js";
 import { Scaffold, Scaffolder } from "../scaffold.js";
 import { Bundle, Bundler } from "../bundle.js";
+import { Component } from "../component.js";
 
 const templatesDir = `templates/scaffold/cagov-web-component`;
 const nunjucksEnv = getEnvironment(templatesDir);
@@ -56,43 +57,75 @@ export const PlainCssFormat = new Format({
 });
 */
 
-const scaffolder: Scaffolder = async (dir, names, collection) => {
+const wcScaffolder: Scaffolder = async (component, names) => {
   const params = {
     names,
-    collection,
+    component,
   };
 
   await Promise.all([
     fs.copyFile(
       `${templatesDir}/hard-hat-bear.jpg`,
-      `${dir}/hard-hat-bear.jpg`
+      `${component.dir}/hard-hat-bear.jpg`
     ),
     renderToFile(
       "index.html.njk",
-      `${dir}/${names.kebabCase}.demo.html`,
+      `${component.dir}/${names.kebabCase}.demo.html`,
       params
     ),
-    renderToFile("index.js.njk", `${dir}/${names.kebabCase}.js`, params),
+    renderToFile(
+      "index.js.njk",
+      `${component.dir}/${names.kebabCase}.js`,
+      params
+    ),
     renderToFile(
       "shadow.styles.css.njk",
-      `${dir}/${names.kebabCase}.shadow.css`
+      `${component.dir}/${names.kebabCase}.shadow.css`
     ),
     renderToFile(
       "shadow.template.html.njk",
-      `${dir}/${names.kebabCase}.shadow.html`,
+      `${component.dir}/${names.kebabCase}.shadow.html`,
       params
     ),
   ]);
 };
 
-export const WebComponentScaffold = new Scaffold("Standard Web Component", {
-  scaffolder,
+const litScaffolder: Scaffolder = async (component, names) => {
+  const params = {
+    names,
+    component,
+  };
+
+  await Promise.all([
+    fs.copyFile(
+      `${templatesDir}/hard-hat-bear.jpg`,
+      `${component.dir}/hard-hat-bear.jpg`
+    ),
+    renderToFile(
+      "index.html.njk",
+      `${component.dir}/${names.kebabCase}.demo.html`,
+      params
+    ),
+    renderToFile(
+      "lit.index.js.njk",
+      `${component.dir}/${names.kebabCase}.js`,
+      params
+    ),
+  ]);
+};
+
+export const WCScaffold = new Scaffold("Standard Web Component", {
+  scaffolder: wcScaffolder,
+});
+
+export const LitScaffold = new Scaffold("Lit-Element Web Component", {
+  scaffolder: litScaffolder,
 });
 
 const bundler: Bundler = async (collection) => {
   const inserts = collection.components
     .map((component) => {
-      const entryPoint = EsbuildFormat.entryPoint(component.name);
+      const entryPoint = EsbuildFormat.entryPoint(component.dirName);
       return `import '../${component.slug}/${entryPoint}';`;
     })
     .join("\n");
@@ -113,10 +146,13 @@ const bundler: Bundler = async (collection) => {
   await fs.writeFile(bundleFilePath, bundleContent);
 };
 
-export const WebComponentBundle = new Bundle("Web Components Bundle", bundler);
+export const WCBundle = new Bundle("Web Components Bundle", bundler);
 
-export const WebComponentCollection = new Collection("Web Components", {
+export const WCDef = new Component("Web Components", {
   formats: [EsbuildFormat],
-  scaffolds: [WebComponentScaffold],
-  bundles: [WebComponentBundle],
+  scaffolds: [WCScaffold, LitScaffold],
+});
+
+export const WebComponentCollection = new Collection("Web Components", WCDef, {
+  bundles: [WCBundle],
 });

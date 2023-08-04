@@ -60,7 +60,7 @@ export const createHtmlHandler = (project: Project) => {
       const componentPath = filePath.match(componentPathRegex)[1];
       const componentName = path.basename(componentPath);
 
-      collection.formats.forEach((format) => {
+      collection.componentDef.formats.forEach((format) => {
         const include = format.include;
         const entryPoint = format.entryPoint(componentName);
 

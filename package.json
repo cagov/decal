@@ -26,6 +26,7 @@
     "koa-mount": "^4.0.0",
     "koa-static": "^5.0.0",
     "koa-websocket": "^7.0.0",
+    "lit-element": "^3.3.3",
     "mime-types": "^2.1.35",
     "nunjucks": "^3.2.3",
     "prompts": "^2.4.2",

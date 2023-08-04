@@ -6,6 +6,7 @@ import {
 } from "./collection.js";
 import { Project } from "./project.js";
 import defaultProjectConfig from "./plugins/default-project.js";
+import { Component } from "./component.js";
 
 /**
  * *Config* collects each Decal project's configuration files and processes them.
@@ -48,11 +49,16 @@ export class Config {
   /**
    * Create a new *Collection* and add it to this Decal project.
    * @param name The name of your new collection.
+   * @param componentDef A *Component* object that defines components for this collection.
    * @param options A *CollectionOptions* object to configure your new collection.
    */
-  createCollection(name: string, options: CollectionOptions) {
-    const collection = new Collection(name, options);
-    const collectionEx = new ProjectCollection(name, collection, this.project);
+  createCollection(
+    name: string,
+    componentDef: Component,
+    options: CollectionOptions
+  ) {
+    const collection = new Collection(name, componentDef, options);
+    const collectionEx = new ProjectCollection(collection, this.project);
     this.project.collections.push(collectionEx);
   }
 
@@ -64,11 +70,7 @@ export class Config {
    */
   applyCollection(collection: Collection, options: Partial<CollectionOptions>) {
     collection.applyOptions(options);
-    const collectionEx = new ProjectCollection(
-      collection.name,
-      collection,
-      this.project
-    );
+    const collectionEx = new ProjectCollection(collection, this.project);
     this.project.collections.push(collectionEx);
   }
 

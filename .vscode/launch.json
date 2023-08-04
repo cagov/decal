@@ -7,11 +7,36 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Serve Mode",
+      "name": "Serve",
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}/src/run/serve.ts",
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": ["serve", "-d", "throwaway/example-component-library"],
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Build",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": ["build", "-d", "throwaway/example-component-library"],
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Bundle",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/index.ts",
+      "args": ["bundle", "-d", "throwaway/example-component-library"],
       "preLaunchTask": "tsc: build - tsconfig.json",
       "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     }

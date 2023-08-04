@@ -17,13 +17,13 @@ export const createDigestHandler = (project: Project) => {
           .map((filePath) => filePath.replace(`${component.dir}/`, ""));
 
         return {
-          ...component,
+          def: component,
           files,
         };
       });
 
       return {
-        ...collection,
+        def: collection,
         components,
       };
     });

@@ -2,6 +2,7 @@ import { ProjectCollection } from "./collection.js";
 import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
 import { Project } from "./project.js";
+import { ProjectComponent } from "./component.js";
 
 export type ScaffoldNames = {
   plainCase: string;
@@ -11,9 +12,8 @@ export type ScaffoldNames = {
 };
 
 export type Scaffolder = (
-  dir: string,
-  names: ScaffoldNames,
-  collection: ProjectCollection
+  component: ProjectComponent,
+  names: ScaffoldNames
 ) => void;
 
 export type ScaffoldDirNamer = (names: ScaffoldNames) => string;
@@ -39,31 +39,38 @@ export class Scaffold {
     this.scaffolder = scaffolder;
   }
 
-  async make(newComponentName: string, collection: ProjectCollection) {
-    const kebabCase = newComponentName.toLowerCase().replaceAll(" ", "-");
-    const snakeCase = newComponentName.toLowerCase().replaceAll(" ", "_");
-    const camelCase = newComponentName
+  async buildIntoCollection(name: string, collection: ProjectCollection) {
+    const nameCases = Scaffold.getNameCases(name);
+    const dirName = this.dirNamer(nameCases);
+
+    const component = new ProjectComponent(
+      dirName,
+      collection.componentDef,
+      collection.project,
+      collection
+    );
+
+    await fs.mkdir(component.dir, { recursive: true });
+
+    const scaffolding = Promise.resolve(this.scaffolder(component, nameCases));
+
+    return scaffolding;
+  }
+
+  static getNameCases(componentName: string) {
+    const kebabCase = componentName.toLowerCase().replaceAll(" ", "-");
+    const snakeCase = componentName.toLowerCase().replaceAll(" ", "_");
+    const camelCase = componentName
       .split(" ")
       .map((word: string) => `${word[0].toUpperCase()}${word.substring(1)}`)
       .join("");
 
-    const names = {
-      plainCase: newComponentName,
+    return {
+      plainCase: componentName,
       kebabCase,
       camelCase,
       snakeCase,
     };
-
-    const dirName = this.dirNamer(names);
-    const dirPath = `${collection.dir}/${dirName}`;
-
-    await fs.mkdir(dirPath, { recursive: true });
-
-    const scaffolding = Promise.resolve(
-      this.scaffolder(dirPath, names, collection)
-    );
-
-    return scaffolding;
   }
 
   static async prompt(project: Project) {
@@ -88,12 +95,13 @@ export class Scaffold {
         })),
       },
       {
-        type: (prev) => (prev && prev.scaffolds.length > 1 ? "select" : null),
+        type: (prev: ProjectCollection) =>
+          prev && prev.componentDef.scaffolds.length > 1 ? "select" : null,
         name: "scaffold",
         message: "Which scaffold would you like to use?",
         initial: 0,
-        choices: (prev) =>
-          prev.scaffolds.map((scaffold: Scaffold) => ({
+        choices: (prev: ProjectCollection) =>
+          prev.componentDef.scaffolds.map((scaffold: Scaffold) => ({
             title: scaffold.name,
             value: scaffold,
           })),
@@ -104,10 +112,10 @@ export class Scaffold {
 
     const newComponentName = responses.name;
     const collection = responses.collection || collections[0];
-    const scaffold = responses.scaffold || collection.scaffolds[0];
+    const scaffold = responses.scaffold || collection.componentDef.scaffolds[0];
 
     if (newComponentName && scaffold) {
-      await scaffold.make(newComponentName, collection);
+      await scaffold.buildIntoCollection(newComponentName, collection);
     }
   }
 }

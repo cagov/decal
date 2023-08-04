@@ -7,6 +7,7 @@ import { Format, Formatter } from "../format.js";
 import { Collection } from "../collection.js";
 import { Scaffold, Scaffolder } from "../scaffold.js";
 import { Bundle, Bundler } from "../bundle.js";
+import { Component } from "../component.js";
 
 const templatesDir = `templates/scaffold/cagov-sass-component`;
 const nunjucksEnv = getEnvironment(templatesDir);
@@ -46,23 +47,27 @@ export const SassFormat = new Format("CSS/Sass", {
   formatter: formatter,
 });
 
-const SassScaffolder: Scaffolder = async (dir, names, collection) => {
+const SassScaffolder: Scaffolder = async (component, names) => {
   const params = {
     names,
-    collection,
+    component,
   };
 
   await Promise.all([
     fs.copyFile(
       `${templatesDir}/hard-hat-bear.jpg`,
-      `${dir}/hard-hat-bear.jpg`
+      `${component.dir}/hard-hat-bear.jpg`
     ),
     renderToFile(
       "index.html.njk",
-      `${dir}/${names.kebabCase}.demo.html`,
+      `${component.dir}/${names.kebabCase}.demo.html`,
       params
     ),
-    renderToFile("index.scss.njk", `${dir}/${names.kebabCase}.scss`, params),
+    renderToFile(
+      "index.scss.njk",
+      `${component.dir}/${names.kebabCase}.scss`,
+      params
+    ),
   ]);
 };
 
@@ -73,7 +78,7 @@ export const SassScaffold = new Scaffold("Standard Sass", {
 const bundler: Bundler = async (collection) => {
   const inserts = collection.components
     .map((component) => {
-      const entryPoint = SassFormat.entryPoint(component.name);
+      const entryPoint = SassFormat.entryPoint(component.dirName);
       return `@import "../${component.slug}/${entryPoint}";`;
     })
     .join("\n");
@@ -99,8 +104,11 @@ export const SassComponentsBundle = new Bundle(
   bundler
 );
 
-export const SassCollection = new Collection("Sass Styles", {
+export const SassDef = new Component("Sass Styles", {
   formats: [SassFormat],
   scaffolds: [SassScaffold],
+});
+
+export const SassCollection = new Collection("Sass Styles", SassDef, {
   bundles: [SassComponentsBundle],
 });
