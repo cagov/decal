@@ -2,16 +2,16 @@ import { promises as fs } from "fs";
 import sass from "sass";
 import chalk from "chalk";
 import url from "url";
-import { getEnvironment, getRenderer } from "../nunjucks.js";
-import { Format, Formatter } from "../format.js";
-import { Collection } from "../collection.js";
-import { Scaffold, Scaffolder } from "../scaffold.js";
-import { Bundle, Bundler } from "../bundle.js";
-import { Component } from "../component.js";
 
-const templatesDir = `templates/scaffold/cagov-sass-component`;
-const nunjucksEnv = getEnvironment(templatesDir);
-const renderToFile = getRenderer(nunjucksEnv);
+import { Format, Formatter } from "../../format.js";
+import { Collection } from "../../collection.js";
+import { Scaffold, Scaffolder } from "../../scaffold.js";
+import { Bundle, Bundler } from "../../bundle.js";
+import { Component } from "../../component.js";
+
+// Import scaffold templates.
+import demoHtml from "./demo.html.js";
+import indexScss from "./index.scss.js";
 
 const formatter: Formatter = (filePath) =>
   sass
@@ -41,33 +41,19 @@ const formatter: Formatter = (filePath) =>
     });
 
 export const SassFormat = new Format("CSS/Sass", {
-  entryPoint: (componentName) => `src/${componentName}.scss`,
-  src: { extname: ".scss" },
+  entryPoint: (componentName) => `${componentName}.scss`,
   dist: { extname: ".css" },
   formatter: formatter,
 });
 
 const SassScaffolder: Scaffolder = async (component, names) => {
-  const params = {
-    names,
-    component,
-  };
+  const filePathBase = `${component.dir}/${names.kebabCase}`;
+  const bearFile = `${component.project.dirs.decal}/src/plugins/sass/hard-hat-bear.jpg`;
 
   await Promise.all([
-    fs.copyFile(
-      `${templatesDir}/hard-hat-bear.jpg`,
-      `${component.dir}/hard-hat-bear.jpg`
-    ),
-    renderToFile(
-      "index.html.njk",
-      `${component.dir}/${names.kebabCase}.demo.html`,
-      params
-    ),
-    renderToFile(
-      "index.scss.njk",
-      `${component.dir}/${names.kebabCase}.scss`,
-      params
-    ),
+    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.writeFile(`${filePathBase}.scss`, indexScss(component, names)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
   ]);
 };
 
@@ -112,3 +98,11 @@ export const SassDef = new Component("Sass Styles", {
 export const SassCollection = new Collection("Sass Styles", SassDef, {
   bundles: [SassComponentsBundle],
 });
+
+export default {
+  Collection: SassCollection,
+  Component: SassDef,
+  Format: SassFormat,
+  Bundle: SassComponentsBundle,
+  Scaffold: SassScaffold,
+};

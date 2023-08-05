@@ -1,16 +1,16 @@
-import { getEnvironment, getRenderer } from "../nunjucks.js";
 import { promises as fs } from "fs";
 
-import { formatter } from "./cagov-web-component.js";
-import { Format } from "../format.js";
-import { Scaffold, Scaffolder } from "../scaffold.js";
-import { Bundle, Bundler } from "../bundle.js";
-import { Collection } from "../collection.js";
-import { Component } from "../component.js";
+import { formatter } from "../web-component/web-component.js";
+import { Format } from "../../format.js";
+import { Scaffold, Scaffolder } from "../../scaffold.js";
+import { Bundle, Bundler } from "../../bundle.js";
+import { Collection } from "../../collection.js";
+import { Component } from "../../component.js";
 
-const templatesDir = `templates/scaffold/cagov-react-companion`;
-const nunjucksEnv = getEnvironment(templatesDir);
-const renderToFile = getRenderer(nunjucksEnv);
+// Import scaffold templates.
+import indexJsx from "./index.jsx.js";
+import demoJsx from "./demo.jsx.js";
+import demoHtml from "./demo.html.js";
 
 export const ReactFormat = new Format("JSX/esbuild", {
   src: { extname: ".jsx" },
@@ -20,27 +20,14 @@ export const ReactFormat = new Format("JSX/esbuild", {
 });
 
 export const scaffolder: Scaffolder = async (component, names) => {
-  const params = {
-    names,
-    component,
-  };
+  const filePathBase = `${component.dir}/${names.camelCase}`;
+  const bearFile = `${component.project.dirs.decal}/src/plugins/react/hard-hat-bear.jpg`;
 
   await Promise.all([
-    renderToFile(
-      "react-example.html.njk",
-      `${component.dir}/${names.camelCase}.demo.html`,
-      params
-    ),
-    renderToFile(
-      "react-example.jsx.njk",
-      `${component.dir}/${names.camelCase}.demo.jsx`,
-      params
-    ),
-    renderToFile(
-      "react.jsx.njk",
-      `${component.dir}/${names.camelCase}.jsx`,
-      params
-    ),
+    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.writeFile(`${filePathBase}.jsx`, indexJsx(component, names)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
+    fs.writeFile(`${filePathBase}.demo.jsx`, demoJsx(component, names)),
   ]);
 };
 
@@ -88,3 +75,14 @@ export const ReactDef = new Component("React Components", {
 export const ReactCollection = new Collection("React Components", ReactDef, {
   bundles: [ReactBundle],
 });
+
+export default {
+  Collection: ReactCollection,
+  Component: ReactDef,
+  Format: ReactFormat,
+  Bundle: ReactBundle,
+  Scaffolds: {
+    Standard: ReactScaffoldScratch,
+    FromWebComponent: ReactScaffoldWC,
+  },
+};

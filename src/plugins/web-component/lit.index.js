@@ -1,6 +1,8 @@
+export default (component, names) => ` // ${names.kebabCase}.js
+
 import { LitElement, css, html } from 'lit-element';
 
-export class {{names.camelCase}} extends LitElement {
+export class ${names.camelCase} extends LitElement {
   static get properties() {
     return {
       count: { type: Number },
@@ -17,7 +19,7 @@ export class {{names.camelCase}} extends LitElement {
   }
 
   static get styles() {
-    return css`
+    return css\`
       #container {
         margin: 2rem;
       }
@@ -36,11 +38,11 @@ export class {{names.camelCase}} extends LitElement {
         font-size: 1.2em;
         cursor: pointer
       }
-    `;
+    \`;
   }
 
   render() {
-    return html`
+    return html\`
       <div id="container">
         <slot name="the-bear"></slot>
 
@@ -51,18 +53,19 @@ export class {{names.camelCase}} extends LitElement {
         <div id="counter-widget">
           <p>This example counter widget is inserted via JavaScript.</p>
           <p>Check out the code in <em>{{component.slug}}/{{names.kebabCase}}.js</em>.</p>
-          <button type="button" id="counter-button" @click="${this.increment}">Increment counter</button>
-          <p>You've clicked the button <span id="count">${this.count}</span> times.</p>
+          <button type="button" id="counter-button" @click="\${this.increment}">Increment counter</button>
+          <p>You've clicked the button <span id="count">\${this.count}</span> times.</p>
         </div>
 
         <slot name="content">
           <p>Default content!</p>
         </slot>
       </div>
-    `;
+    \`;
   }
 }
 
-window.customElements.define("cagov-{{names.kebabCase}}", {{names.camelCase}});
+window.customElements.define("cagov-${names.kebabCase}", ${names.camelCase});
 
-export default {{names.camelCase}};
+export default ${names.camelCase};
+`;

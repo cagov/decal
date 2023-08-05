@@ -1,9 +1,9 @@
-import { WebComponentCollection } from "./cagov-web-component.js";
-import { SassCollection } from "./cagov-sass-component.js";
+import WebComponent from "./web-component/web-component.js";
+import Sass from "./sass/sass.js";
 
 export default (decalConfig) => {
-  decalConfig.applyCollection(WebComponentCollection, {
+  decalConfig.applyCollection(WebComponent.Collection, {
     dirName: "components",
   });
-  decalConfig.applyCollection(SassCollection, { dirName: "styles" });
+  decalConfig.applyCollection(Sass.Collection, { dirName: "styles" });
 };

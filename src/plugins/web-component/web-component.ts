@@ -1,16 +1,19 @@
 import { promises as fs } from "fs";
 import chalk from "chalk";
 import esbuild from "esbuild";
-import { getEnvironment, getRenderer } from "../nunjucks.js";
-import { Format, Formatter } from "../format.js";
-import { Collection } from "../collection.js";
-import { Scaffold, Scaffolder } from "../scaffold.js";
-import { Bundle, Bundler } from "../bundle.js";
-import { Component } from "../component.js";
 
-const templatesDir = `templates/scaffold/cagov-web-component`;
-const nunjucksEnv = getEnvironment(templatesDir);
-const renderToFile = getRenderer(nunjucksEnv);
+import { Format, Formatter } from "../../format.js";
+import { Collection } from "../../collection.js";
+import { Scaffold, Scaffolder } from "../../scaffold.js";
+import { Bundle, Bundler } from "../../bundle.js";
+import { Component } from "../../component.js";
+
+// Import scaffold templates
+import demoHtml from "./demo.html.js";
+import litIndex from "./lit.index.js";
+import standardIndex from "./standard.index.js";
+import shadowCss from "./shadow.css.js";
+import shadowHtml from "./shadow.html.js";
 
 export const formatter: Formatter = (filePath) =>
   esbuild
@@ -50,72 +53,32 @@ export const EsbuildFormat = new Format("JS/esbuild", {
   formatter,
 });
 
-/*
-export const PlainCssFormat = new Format({
-  name: "Plain CSS",
-  entryPoint: "index.css",
-});
-*/
-
-const wcScaffolder: Scaffolder = async (component, names) => {
-  const params = {
-    names,
-    component,
-  };
+const standardScaffolder: Scaffolder = async (component, names) => {
+  const filePathBase = `${component.dir}/${names.kebabCase}`;
+  const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
 
   await Promise.all([
-    fs.copyFile(
-      `${templatesDir}/hard-hat-bear.jpg`,
-      `${component.dir}/hard-hat-bear.jpg`
-    ),
-    renderToFile(
-      "index.html.njk",
-      `${component.dir}/${names.kebabCase}.demo.html`,
-      params
-    ),
-    renderToFile(
-      "index.js.njk",
-      `${component.dir}/${names.kebabCase}.js`,
-      params
-    ),
-    renderToFile(
-      "shadow.styles.css.njk",
-      `${component.dir}/${names.kebabCase}.shadow.css`
-    ),
-    renderToFile(
-      "shadow.template.html.njk",
-      `${component.dir}/${names.kebabCase}.shadow.html`,
-      params
-    ),
+    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.writeFile(`${filePathBase}.js`, standardIndex(component, names)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
+    fs.writeFile(`${filePathBase}.shadow.html`, shadowHtml(component, names)),
+    fs.writeFile(`${filePathBase}.shadow.css`, shadowCss(component, names)),
   ]);
 };
 
 const litScaffolder: Scaffolder = async (component, names) => {
-  const params = {
-    names,
-    component,
-  };
+  const filePathBase = `${component.dir}/${names.kebabCase}`;
+  const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
 
   await Promise.all([
-    fs.copyFile(
-      `${templatesDir}/hard-hat-bear.jpg`,
-      `${component.dir}/hard-hat-bear.jpg`
-    ),
-    renderToFile(
-      "index.html.njk",
-      `${component.dir}/${names.kebabCase}.demo.html`,
-      params
-    ),
-    renderToFile(
-      "lit.index.js.njk",
-      `${component.dir}/${names.kebabCase}.js`,
-      params
-    ),
+    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.writeFile(`${filePathBase}.js`, litIndex(component, names)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
   ]);
 };
 
-export const WCScaffold = new Scaffold("Standard Web Component", {
-  scaffolder: wcScaffolder,
+export const StandardScaffold = new Scaffold("Standard Web Component", {
+  scaffolder: standardScaffolder,
 });
 
 export const LitScaffold = new Scaffold("Lit-Element Web Component", {
@@ -148,11 +111,22 @@ const bundler: Bundler = async (collection) => {
 
 export const WCBundle = new Bundle("Web Components Bundle", bundler);
 
-export const WCDef = new Component("Web Components", {
+export const WCDefinition = new Component("Web Components", {
   formats: [EsbuildFormat],
-  scaffolds: [WCScaffold, LitScaffold],
+  scaffolds: [StandardScaffold, LitScaffold],
 });
 
-export const WebComponentCollection = new Collection("Web Components", WCDef, {
+export const WCCollection = new Collection("Web Components", WCDefinition, {
   bundles: [WCBundle],
 });
+
+export default {
+  Collection: WCCollection,
+  Component: WCDefinition,
+  Format: EsbuildFormat,
+  Bundle: WCBundle,
+  Scaffolds: {
+    Lit: LitScaffold,
+    Standard: StandardScaffold,
+  },
+};

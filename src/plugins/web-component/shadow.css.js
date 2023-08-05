@@ -1,3 +1,5 @@
+export default (component, names) => `/* ${names.kebabCase}.shadow.css */
+
 #container {
   margin: 2rem;
 }
@@ -16,3 +18,4 @@ button {
   font-size: 1.2em;
   cursor: pointer
 }
+`;
