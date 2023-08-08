@@ -83,7 +83,7 @@ yargs(hideBin(process.argv))
           (y) => y,
           async (argv) => {
             const responses = await Project.prompt();
-            await Project.make(responses);
+            await Project.make(argv.dir, responses);
             process.exit(0);
           }
         )

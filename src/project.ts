@@ -27,6 +27,18 @@ type Dirs = {
   relative: (filePath: string) => string;
 };
 
+const defaultDecalConfigFile = `
+import DecalWebComponent from "decal/dist/plugins/web-component/web-component.js";
+import DecalSass from "decal/dist/plugins/sass/sass.js";
+import DecalReact from "decal/dist/plugins/react/react.js";
+
+export default (decalConfig) => {
+  decalConfig.applyCollection(DecalWebComponent.Collection);
+  decalConfig.applyCollection(DecalSass.Collection);
+  decalConfig.applyCollection(DecalReact.Collection);
+};
+`.trim();
+
 export class Project {
   /** Collections are folders that contain components. */
   collections: ProjectCollection[];
@@ -105,7 +117,7 @@ export class Project {
     return responses;
   }
 
-  static async make(responses: Answers<string>) {
+  static async make(dir: string, responses: Answers<string>) {
     // Need a line break.
     console.log("");
 
@@ -123,6 +135,8 @@ export class Project {
       description,
       license,
     } = responses;
+
+    const dirPath = dir ? `${dir}/${module}` : module;
 
     const writePackageFile = () => {
       const packageObject = {
@@ -143,24 +157,20 @@ export class Project {
       };
 
       const packageJson = JSON.stringify(packageObject, null, 2);
-      const packagePath = `${module}/package.json`;
+      const packagePath = `${dirPath}/package.json`;
       return fs.writeFile(packagePath, packageJson);
     };
 
-    await fs.mkdir(module);
+    await fs.mkdir(dirPath);
 
-    console.log(chalk.green(`Creating project in folder ${module}.`));
+    console.log(chalk.green(`Creating project in folder ${dirPath}.`));
 
-    await Promise.all([
-      fs.mkdir(`${module}/components`),
-      fs.mkdir(`${module}/dist`),
-      fs.mkdir(`${module}/test`),
-      fs.mkdir(`${module}/demo`),
-    ])
+    await Promise.all([fs.mkdir(`${dirPath}/_dist`)])
       .then(() =>
         Promise.all([
           writePackageFile(),
-          fs.writeFile(`${module}/.gitignore`, "dist\nnode_modules\n"),
+          fs.writeFile(`${dirPath}/.gitignore`, "dist\nnode_modules\n"),
+          fs.writeFile(`${dirPath}/decal.config.js`, defaultDecalConfigFile),
         ])
       )
       .catch((e) => {
@@ -173,8 +183,8 @@ export class Project {
 
     console.log("To begin development, run the following commands.\n");
 
-    console.log(`1. Switch your terminal into the ${module} folder.\n`);
-    console.log(`${chalk.bgGray(`cd ${module}`)}\n`);
+    console.log(`1. Switch your terminal into the ${dirPath} folder.\n`);
+    console.log(`${chalk.bgGray(`cd ${dirPath}`)}\n`);
 
     console.log("2. Install JavaScript dependencies.\n");
     console.log(`${chalk.bgGray("npm install")}\n`);
