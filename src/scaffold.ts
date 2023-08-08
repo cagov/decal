@@ -98,7 +98,9 @@ export class Scaffold {
       },
       {
         type: (prev: ProjectCollection) =>
-          prev && prev.componentDef.scaffolds.length > 1 ? "select" : null,
+          prev !== undefined && prev.componentDef.scaffolds.length > 1
+            ? "select"
+            : null,
         name: "scaffold",
         message: "Which scaffold would you like to use?",
         initial: 0,

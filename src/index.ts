@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import yargs, { Argv, Arguments } from "yargs";
 import { hideBin } from "yargs/helpers";
 

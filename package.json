@@ -1,6 +1,6 @@
 {
   "name": "@cagov/decal",
-  "version": "0.0.1",
+  "version": "0.0.8",
   "description": "A lightweight tool for creating, developing, bundling, and sharing your web UI component libraries.",
   "main": "dist/index.js",
   "bin": {

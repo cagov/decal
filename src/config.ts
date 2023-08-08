@@ -1,4 +1,5 @@
 import { promises as fs } from "fs";
+import url from "url";
 import {
   Collection,
   ProjectCollection,
@@ -36,12 +37,14 @@ export class Config {
       ? conf
       : `${config.project.dir}/${conf}`;
 
+    const filePath = url.pathToFileURL(confFile);
+
     const configFn = await fs
       .readFile(confFile, "utf-8")
-      .then(() => import(confFile))
-      .catch(() => defaultProjectConfig);
+      .then(() => import(filePath.toString()))
+      .catch(() => ({ default: defaultProjectConfig }));
 
-    if (configFn) configFn.default(config);
+    configFn.default(config);
 
     return config;
   }
@@ -55,7 +58,7 @@ export class Config {
   createCollection(
     name: string,
     componentDef: Component,
-    options: CollectionOptions
+    options: CollectionOptions = {}
   ) {
     const collection = new Collection(name, componentDef, options);
     const collectionEx = new ProjectCollection(collection, this.project);
@@ -68,7 +71,10 @@ export class Config {
    * @param collection The *Collection* object you wish to import.
    * @param options A partial *CollectionOptions* object with any properties you wish to override on the imported collection.
    */
-  applyCollection(collection: Collection, options: Partial<CollectionOptions>) {
+  applyCollection(
+    collection: Collection,
+    options: Partial<CollectionOptions> = {}
+  ) {
     collection.applyOptions(options);
     const collectionEx = new ProjectCollection(collection, this.project);
     this.project.collections.push(collectionEx);

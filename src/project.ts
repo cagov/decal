@@ -28,9 +28,9 @@ type Dirs = {
 };
 
 const defaultDecalConfigFile = `
-import DecalWebComponent from "decal/dist/plugins/web-component/web-component.js";
-import DecalSass from "decal/dist/plugins/sass/sass.js";
-import DecalReact from "decal/dist/plugins/react/react.js";
+import DecalWebComponent from "@cagov/decal/dist/plugins/web-component/web-component.js";
+import DecalSass from "@cagov/decal/dist/plugins/sass/sass.js";
+import DecalReact from "@cagov/decal/dist/plugins/react/react.js";
 
 export default (decalConfig) => {
   decalConfig.applyCollection(DecalWebComponent.Collection);
@@ -146,10 +146,10 @@ export class Project {
         license,
         type: "module",
         scripts: {
-          build: "npx decal build",
-          serve: "npx decal serve",
-          new: "npx decal new",
-          init: "npx decal init",
+          build: "decal build",
+          serve: "decal serve",
+          new: "decal new component",
+          bundle: "decal bundle",
         },
         dependencies: {
           "@cagov/decal": `^${decalPackage.version}`,
@@ -169,7 +169,7 @@ export class Project {
       .then(() =>
         Promise.all([
           writePackageFile(),
-          fs.writeFile(`${dirPath}/.gitignore`, "dist\nnode_modules\n"),
+          fs.writeFile(`${dirPath}/.gitignore`, "_dist\nnode_modules\n"),
           fs.writeFile(`${dirPath}/decal.config.js`, defaultDecalConfigFile),
         ])
       )
@@ -191,5 +191,8 @@ export class Project {
 
     console.log("3. Create your first component.\n");
     console.log(`${chalk.bgGray("npm run new")}\n`);
+
+    console.log("4. Serve your component and start coding!\n");
+    console.log(`${chalk.bgGray("npm run serve")}\n`);
   }
 }
