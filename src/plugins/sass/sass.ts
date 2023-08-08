@@ -43,7 +43,7 @@ const bundler: Bundler = (collection) => {
   return collection.components
     .map((component) => {
       const entryPoint = SassFormat.entryPoint(component.dirName);
-      return `@import "../${component.dirName}/${entryPoint}";`;
+      return `@import "../../${component.slug}/${entryPoint}";`;
     })
     .join("\n");
 };

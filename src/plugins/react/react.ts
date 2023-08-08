@@ -12,12 +12,14 @@ import demoJsx from "./demo.jsx.js";
 import demoHtml from "./demo.html.js";
 
 const bundler: Bundler = (collection) => {
-  return collection.components
+  const inserts = collection.components
     .map((component) => {
       const entryPoint = ReactFormat.entryPoint(component.dirName);
-      return `import ${component.dirName} from '../${component.dirName}/${entryPoint}';`;
+      return `import { ${component.dirName} } from '../../${component.slug}/${entryPoint}';`;
     })
     .join("\n");
+
+  return `import * as React from 'react'\n\n${inserts}`;
 };
 
 export const ReactFormat = new Format("JSX/esbuild", {

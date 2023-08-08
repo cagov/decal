@@ -62,18 +62,22 @@ export class ProjectComponent extends Component {
   project: Project;
   /** The Decal collection to which this component belongs. */
   collection?: ProjectCollection;
+  /** Determines if this component is a bundle. */
+  isBundle: boolean;
 
   /**
    * @param dirName The assigned folder name for this component.
    * @param component The base *Component* definition.
    * @param project The overall Decal *Project*.
    * @param collection The *ProjectCollection* to which this component belongs, if any.
+   * @param isBundle Determines if this component is a bundle. Defaults to false.
    */
   constructor(
     dirName: string,
     component: Component,
     project: Project,
-    collection: ProjectCollection | undefined = undefined
+    collection: ProjectCollection | undefined = undefined,
+    isBundle: boolean = false
   ) {
     super(component.name);
 
@@ -84,18 +88,23 @@ export class ProjectComponent extends Component {
     this.includes = component.includes;
     this.formats = component.formats;
     this.scaffolds = component.scaffolds;
+    this.isBundle = isBundle;
   }
 
   /** The directory where this component resides. */
   get dir(): string {
-    return this.collection
+    return this.isBundle
+      ? `${this.project.dir}/bundles/${this.dirName}`
+      : this.collection
       ? `${this.collection.dir}/${this.dirName}`
       : `${this.project.dir}/${this.dirName}`;
   }
 
   /** This component's relative folder path within the project. */
   get slug(): string {
-    return this.collection
+    return this.isBundle
+      ? `bundles/${this.dirName}`
+      : this.collection
       ? `${this.collection.dirName}/${this.dirName}`
       : this.dirName;
   }

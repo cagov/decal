@@ -89,7 +89,7 @@ export class ProjectCollection extends Collection {
   }
 
   get bundleDir(): string {
-    return `${this.dir}/${this.bundleDirName}`;
+    return `${this.project.dir}/bundles/${this.bundleDirName}`;
   }
 
   /** The components available to this collection. */
@@ -118,7 +118,8 @@ export class ProjectCollection extends Collection {
         this.bundleDirName,
         this.componentDef,
         this.project,
-        this
+        this,
+        true
       );
       return component;
     } else {

@@ -25,7 +25,12 @@ export const formatter: Formatter = (filePath) =>
       loader: {
         ".css": "text",
         ".html": "text",
+        //".js": "jsx",
       },
+      //jsxImportSource: "react",
+      //platform: "neutral",
+      //jsx: "automatic",
+      //jsxSideEffects: true,
     })
     .then((result) => {
       const body = result.outputFiles[0].text;
@@ -51,7 +56,7 @@ const bundler: Bundler = (collection) => {
   return collection.components
     .map((component) => {
       const entryPoint = EsbuildFormat.entryPoint(component.dirName);
-      return `import '../${component.dirName}/${entryPoint}';`;
+      return `import '../../${component.slug}/${entryPoint}';`;
     })
     .join("\n");
 };
