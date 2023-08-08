@@ -2,10 +2,9 @@ import { promises as fs } from "fs";
 import chalk from "chalk";
 import esbuild from "esbuild";
 
-import { Format, Formatter } from "../../format.js";
+import { Format, Formatter, Bundler } from "../../format.js";
 import { Collection } from "../../collection.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
-import { Bundle, Bundler } from "../../bundle.js";
 import { Component } from "../../component.js";
 
 // Import scaffold templates
@@ -48,9 +47,19 @@ export const formatter: Formatter = (filePath) =>
       return "// There are errors in this file. Check your Decal console.";
     });
 
+const bundler: Bundler = (collection) => {
+  return collection.components
+    .map((component) => {
+      const entryPoint = EsbuildFormat.entryPoint(component.dirName);
+      return `import '../${component.dirName}/${entryPoint}';`;
+    })
+    .join("\n");
+};
+
 export const EsbuildFormat = new Format("JS/esbuild", {
   extname: ".js",
   formatter,
+  bundler,
 });
 
 const standardScaffolder: Scaffolder = async (component, names) => {
@@ -66,6 +75,10 @@ const standardScaffolder: Scaffolder = async (component, names) => {
   ]);
 };
 
+export const StandardScaffold = new Scaffold("Standard Web Component", {
+  scaffolder: standardScaffolder,
+});
+
 const litScaffolder: Scaffolder = async (component, names) => {
   const filePathBase = `${component.dir}/${names.kebabCase}`;
   const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
@@ -77,39 +90,9 @@ const litScaffolder: Scaffolder = async (component, names) => {
   ]);
 };
 
-export const StandardScaffold = new Scaffold("Standard Web Component", {
-  scaffolder: standardScaffolder,
-});
-
 export const LitScaffold = new Scaffold("Lit-Element Web Component", {
   scaffolder: litScaffolder,
 });
-
-const bundler: Bundler = async (collection) => {
-  const inserts = collection.components
-    .map((component) => {
-      const entryPoint = EsbuildFormat.entryPoint(component.dirName);
-      return `import '../${component.slug}/${entryPoint}';`;
-    })
-    .join("\n");
-
-  const tempPath = `${collection.project.dir}/_temp`;
-  await fs.mkdir(tempPath, { recursive: true });
-
-  const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
-  await fs.writeFile(tempFilePath, inserts);
-
-  const bundleResult = await formatter(tempFilePath, inserts);
-  const bundleContent = `// Signature\n${bundleResult}`;
-
-  const bundlePath = `${collection.project.dir}/_dist/bundles`;
-  await fs.mkdir(bundlePath, { recursive: true });
-
-  const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.js`;
-  await fs.writeFile(bundleFilePath, bundleContent);
-};
-
-export const WCBundle = new Bundle("Web Components Bundle", bundler);
 
 export const WCDefinition = new Component("Web Components", {
   formats: [EsbuildFormat],
@@ -117,14 +100,14 @@ export const WCDefinition = new Component("Web Components", {
 });
 
 export const WCCollection = new Collection("Web Components", WCDefinition, {
-  bundles: [WCBundle],
+  dirName: "web-components",
+  bundleDirName: "all-web-components",
 });
 
 export default {
   Collection: WCCollection,
   Component: WCDefinition,
   Format: EsbuildFormat,
-  Bundle: WCBundle,
   Scaffolds: {
     Lit: LitScaffold,
     Standard: StandardScaffold,

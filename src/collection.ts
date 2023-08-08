@@ -1,13 +1,14 @@
 import glob from "glob";
+import { promises as fs } from "fs";
+
 import { Component, ProjectComponent } from "./component.js";
 import { Include } from "./include.js";
-import { Bundle } from "./bundle.js";
 import { Project } from "./project.js";
 
 export type CollectionOptions = {
   includes?: Include[];
-  bundles?: Bundle[];
   dirName?: string;
+  bundleDirName?: string;
 };
 
 /**
@@ -19,12 +20,12 @@ export class Collection {
   name: string;
   /** The folder name for this collection within the project. */
   dirName: string;
+  /** The folder name for this collection's bundles. */
+  bundleDirName: string;
   /** The definition for components of this collection. */
   componentDef: Component;
   /** A list of *Include* objects that define how this collection loads in development. */
   includes: Include[];
-  /** A list of *Bundle* objects that define how this collection is packaged for publication. */
-  bundles: Bundle[];
 
   /**
    * @param name The descriptive name for this collection.
@@ -36,7 +37,7 @@ export class Collection {
     componentDef: Component,
     options: CollectionOptions = {}
   ) {
-    const { includes = [], bundles = [], dirName } = options;
+    const { includes = [], dirName, bundleDirName } = options;
 
     this.name = name;
     this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
@@ -44,7 +45,7 @@ export class Collection {
     this.componentDef = componentDef;
 
     this.includes = includes;
-    this.bundles = bundles;
+    this.bundleDirName = bundleDirName || `all-${this.dirName}`;
   }
 
   /**
@@ -52,11 +53,11 @@ export class Collection {
    * @param options A *CollectionOptions* object with overrides.
    */
   applyOptions(options: CollectionOptions) {
-    const { includes, bundles, dirName } = options;
+    const { includes, bundleDirName, dirName } = options;
 
     if (dirName) this.dirName = dirName;
     if (includes) this.includes = includes;
-    if (bundles) this.bundles = bundles;
+    if (bundleDirName) this.bundleDirName = bundleDirName;
   }
 }
 
@@ -79,7 +80,7 @@ export class ProjectCollection extends Collection {
     this.project = project;
     this.dirName = collection.dirName;
     this.includes = collection.includes;
-    this.bundles = collection.bundles;
+    this.bundleDirName = collection.bundleDirName;
   }
 
   /** The directory where this collection resides. */
@@ -87,11 +88,19 @@ export class ProjectCollection extends Collection {
     return `${this.project.dir}/${this.dirName}`;
   }
 
+  get bundleDir(): string {
+    return `${this.dir}/${this.bundleDirName}`;
+  }
+
   /** The components available to this collection. */
   get components(): ProjectComponent[] {
     return glob
       .sync(`${this.dir}/*`)
-      .filter((globDir) => !globDir.includes("node_modules"))
+      .filter((globDir) => {
+        const hasNode = globDir.includes("node_modules");
+        const hasBundle = globDir.includes(this.bundleDirName);
+        return !(hasNode || hasBundle);
+      })
       .map((componentDir) => {
         const component = new ProjectComponent(
           componentDir.replace(`${this.dir}/`, ""),
@@ -101,5 +110,56 @@ export class ProjectCollection extends Collection {
         );
         return component;
       });
+  }
+
+  get bundle(): ProjectComponent | undefined {
+    if (this.componentDef.formats.some((format) => format.canBundle)) {
+      const component = new ProjectComponent(
+        this.bundleDirName,
+        this.componentDef,
+        this.project,
+        this
+      );
+      return component;
+    } else {
+      return undefined;
+    }
+  }
+
+  async rebundle() {
+    const promises = this.componentDef.formats.map(async (format) => {
+      if (format.canBundle) {
+        await fs.mkdir(this.bundleDir, { recursive: true });
+        const entryPoint = format.entryPoint(this.bundleDirName);
+        const contents = await format.bundler(this);
+        await fs.writeFile(`${this.bundleDir}/${entryPoint}`, contents);
+      }
+    });
+
+    await Promise.all(promises);
+  }
+
+  async exportBundle() {
+    await this.rebundle();
+
+    const promises = this.componentDef.formats.map(async (format) => {
+      if (format.canBundle) {
+        const entryPoint = format.entryPoint(this.bundleDirName);
+        const entryPointPath = `${this.bundleDir}/${entryPoint}`;
+        const bundleContents = await fs.readFile(entryPointPath, "utf-8");
+
+        const packContents = await Promise.resolve(
+          format.formatter(entryPointPath, bundleContents)
+        );
+
+        const packDir = `${this.project.dir}/_dist/bundles`;
+        await fs.mkdir(packDir, { recursive: true });
+
+        const bundlePoint = format.bundlePoint(this.bundleDirName, this);
+        await fs.writeFile(`${packDir}/${bundlePoint}`, packContents);
+      }
+    });
+
+    await Promise.all(promises);
   }
 }

@@ -4,11 +4,13 @@ import { Scaffold } from "./scaffold.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
 
+export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
+
 export type ComponentOptions = {
+  dirName?: string;
   formats?: Format[];
   scaffolds?: Scaffold[];
   includes?: Include[];
-  dirName?: string;
 };
 
 export class Component {
@@ -20,15 +22,15 @@ export class Component {
    * Components within a collection will each have their own unique dirName.
    */
   dirName: string;
-  /** A list of *Format* objects that define file formats across the collection. */
+  /** A list of *Format* objects that define file formats across the component. */
   formats: Format[];
   /** A list of *Scaffold* objects that define how new components are constructed. */
   scaffolds: Scaffold[];
-  /** A list of *Include* objects that define how this collection loads in development. */
+  /** A list of *Include* objects that define how this component loads in development. */
   includes: Include[];
 
   constructor(name: string, options: ComponentOptions = {}) {
-    const { formats = [], scaffolds = [], includes = [], dirName } = options;
+    const { dirName, formats = [], scaffolds = [], includes = [] } = options;
 
     this.name = name;
     this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
@@ -39,10 +41,10 @@ export class Component {
   }
 
   /**
-   * Override the original collection's parameters with your own.
-   * @param options A *CollectionOptions* object with overrides.
+   * Override the original component's parameters with your own.
+   * @param options A *ComponentOptions* object with overrides.
    */
-  applyOptions(options: ComponentOptions) {
+  override(options: ComponentOptions) {
     const { formats, scaffolds, includes, dirName } = options;
 
     if (dirName) this.dirName = dirName;

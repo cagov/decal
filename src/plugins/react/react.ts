@@ -1,9 +1,8 @@
 import { promises as fs } from "fs";
 
 import { formatter } from "../web-component/web-component.js";
-import { Format } from "../../format.js";
+import { Format, Bundler } from "../../format.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
-import { Bundle, Bundler } from "../../bundle.js";
 import { Collection } from "../../collection.js";
 import { Component } from "../../component.js";
 
@@ -12,11 +11,21 @@ import indexJsx from "./index.jsx.js";
 import demoJsx from "./demo.jsx.js";
 import demoHtml from "./demo.html.js";
 
+const bundler: Bundler = (collection) => {
+  return collection.components
+    .map((component) => {
+      const entryPoint = ReactFormat.entryPoint(component.dirName);
+      return `import ${component.dirName} from '../${component.dirName}/${entryPoint}';`;
+    })
+    .join("\n");
+};
+
 export const ReactFormat = new Format("JSX/esbuild", {
   src: { extname: ".jsx" },
   dist: { extname: ".js" },
   formatter: formatter,
   include: false,
+  bundler: bundler,
 });
 
 export const scaffolder: Scaffolder = async (component, names) => {
@@ -41,46 +50,20 @@ export const ReactScaffoldScratch = new Scaffold("React from scratch", {
   scaffolder,
 });
 
-const bundler: Bundler = async (collection) => {
-  const inserts = collection.components
-    .map((component) => {
-      const entryPoint = ReactFormat.entryPoint(component.dirName);
-      return `import ${component.dirName} from '../${component.slug}/${entryPoint}';`;
-    })
-    .join("\n");
-
-  const tempPath = `${collection.project.dir}/_temp`;
-  await fs.mkdir(tempPath, { recursive: true });
-
-  const tempFilePath = `${tempPath}/${collection.dirName}.bundle.js`;
-  await fs.writeFile(tempFilePath, inserts);
-
-  const bundleResult = await formatter(tempFilePath, inserts);
-  const bundleContent = `${bundleResult}`;
-
-  const bundlePath = `${collection.project.dir}/_dist/bundles`;
-  await fs.mkdir(bundlePath, { recursive: true });
-
-  const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.js`;
-  await fs.writeFile(bundleFilePath, bundleContent);
-};
-
-export const ReactBundle = new Bundle("React Components Bundle", bundler);
-
 export const ReactDef = new Component("React Components", {
   formats: [ReactFormat],
   scaffolds: [ReactScaffoldWC, ReactScaffoldScratch],
 });
 
 export const ReactCollection = new Collection("React Components", ReactDef, {
-  bundles: [ReactBundle],
+  dirName: "react",
+  bundleDirName: "AllReact",
 });
 
 export default {
   Collection: ReactCollection,
   Component: ReactDef,
   Format: ReactFormat,
-  Bundle: ReactBundle,
   Scaffolds: {
     Standard: ReactScaffoldScratch,
     FromWebComponent: ReactScaffoldWC,

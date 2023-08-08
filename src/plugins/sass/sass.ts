@@ -3,10 +3,9 @@ import sass from "sass";
 import chalk from "chalk";
 import url from "url";
 
-import { Format, Formatter } from "../../format.js";
+import { Format, Formatter, Bundler } from "../../format.js";
 import { Collection } from "../../collection.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
-import { Bundle, Bundler } from "../../bundle.js";
 import { Component } from "../../component.js";
 
 // Import scaffold templates.
@@ -40,10 +39,20 @@ const formatter: Formatter = (filePath) =>
       return "/* There are errors in this file. Check your Decal console. */";
     });
 
+const bundler: Bundler = (collection) => {
+  return collection.components
+    .map((component) => {
+      const entryPoint = SassFormat.entryPoint(component.dirName);
+      return `@import "../${component.dirName}/${entryPoint}";`;
+    })
+    .join("\n");
+};
+
 export const SassFormat = new Format("CSS/Sass", {
   entryPoint: (componentName) => `${componentName}.scss`,
   dist: { extname: ".css" },
   formatter: formatter,
+  bundler: bundler,
 });
 
 const SassScaffolder: Scaffolder = async (component, names) => {
@@ -61,48 +70,19 @@ export const SassScaffold = new Scaffold("Standard Sass", {
   scaffolder: SassScaffolder,
 });
 
-const bundler: Bundler = async (collection) => {
-  const inserts = collection.components
-    .map((component) => {
-      const entryPoint = SassFormat.entryPoint(component.dirName);
-      return `@import "../${component.slug}/${entryPoint}";`;
-    })
-    .join("\n");
-
-  const tempPath = `${collection.project.dir}/_temp`;
-  await fs.mkdir(tempPath, { recursive: true });
-
-  const tempFilePath = `${tempPath}/${collection.dirName}.bundle.scss`;
-  await fs.writeFile(tempFilePath, inserts);
-
-  const bundleResult = await formatter(tempFilePath, inserts);
-  const bundleContent = bundleResult;
-
-  const bundlePath = `${collection.project.dir}/_dist/bundles`;
-  await fs.mkdir(bundlePath, { recursive: true });
-
-  const bundleFilePath = `${bundlePath}/${collection.dirName}.bundle.css`;
-  await fs.writeFile(bundleFilePath, bundleContent);
-};
-
-export const SassComponentsBundle = new Bundle(
-  "Web Components Bundle",
-  bundler
-);
-
 export const SassDef = new Component("Sass Styles", {
   formats: [SassFormat],
   scaffolds: [SassScaffold],
 });
 
 export const SassCollection = new Collection("Sass Styles", SassDef, {
-  bundles: [SassComponentsBundle],
+  dirName: "styles",
+  bundleDirName: "all-styles",
 });
 
 export default {
   Collection: SassCollection,
   Component: SassDef,
   Format: SassFormat,
-  Bundle: SassComponentsBundle,
   Scaffold: SassScaffold,
 };

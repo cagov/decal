@@ -63,10 +63,8 @@ yargs(hideBin(process.argv))
       const bundlings: Promise<void>[] = [];
 
       config.project.collections.forEach((collection) => {
-        collection.bundles.forEach(async (bundle) => {
-          const bundling = bundle.make(collection);
-          bundlings.push(bundling);
-        });
+        const bundling = collection.exportBundle();
+        bundlings.push(bundling);
       });
 
       await Promise.all(bundlings);

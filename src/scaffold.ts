@@ -52,7 +52,9 @@ export class Scaffold {
 
     await fs.mkdir(component.dir, { recursive: true });
 
-    const scaffolding = Promise.resolve(this.scaffolder(component, nameCases));
+    const scaffolding = Promise.resolve(
+      this.scaffolder(component, nameCases)
+    ).then(async () => collection.rebundle());
 
     return scaffolding;
   }

@@ -1,13 +1,22 @@
 import * as path from "path";
 import mime from "mime-types";
 import { Include } from "./include.js";
+import { ProjectCollection } from "./collection.js";
 
 export type Formatter = (
   filePath: string,
   contents: string
 ) => string | Promise<string>;
 
+export type Bundler = (
+  collection: ProjectCollection
+) => string | Promise<string>;
+
 export type FilePointNamer = (componentName: string) => string;
+export type BundlePointNamer = (
+  componentName: string,
+  collection: ProjectCollection
+) => string;
 
 const defaultFormatter: Formatter = (_, contents: string) => contents;
 
@@ -28,6 +37,11 @@ export type FormatOptions = {
     extname?: string;
     mimeType?: string;
   };
+  bundler?: Bundler;
+  bundlePoint?: string | BundlePointNamer | boolean;
+  serveOptions?: any;
+  buildOptions?: any;
+  bundleOptions?: any;
 };
 
 export class Format {
@@ -45,6 +59,14 @@ export class Format {
     extname: string;
     mimeType: string;
   };
+  bundler: Bundler;
+  bundlePoint: BundlePointNamer;
+  serveOptions: any;
+  buildOptions: any;
+  bundleOptions: any;
+  canServe: boolean = true;
+  canBuild: boolean = true;
+  canBundle: boolean = true;
 
   constructor(name: string, options: FormatOptions) {
     const {
@@ -57,6 +79,11 @@ export class Format {
       mimeType,
       src,
       dist,
+      bundler,
+      bundlePoint,
+      serveOptions,
+      buildOptions,
+      bundleOptions,
     } = options;
 
     if (!name) {
@@ -69,6 +96,10 @@ export class Format {
       : name.replace(/\W/g, "").toLowerCase();
 
     this.formatter = formatter;
+
+    this.serveOptions = serveOptions || {};
+    this.buildOptions = buildOptions || {};
+    this.bundleOptions = bundleOptions || {};
 
     this.src = { extname: "", mimeType: "" };
     this.dist = { extname: "", mimeType: "" };
@@ -149,6 +180,24 @@ export class Format {
       this.include = new Include("Empty");
     } else {
       this.include = include;
+    }
+
+    if (typeof bundlePoint === "function") {
+      this.bundlePoint = bundlePoint;
+    } else if (typeof bundlePoint === "string") {
+      this.bundlePoint = () => bundlePoint;
+    } else if (bundlePoint === false) {
+      this.bundlePoint = () => "";
+      this.canBundle = false;
+    } else {
+      this.bundlePoint = (componentName) => this.exitPoint(componentName);
+    }
+
+    if (bundler) {
+      this.bundler = bundler;
+    } else {
+      this.bundler = () => "";
+      this.canBundle = false;
     }
   }
 

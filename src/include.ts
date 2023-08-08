@@ -5,7 +5,7 @@ export class Include {
   name: string;
   id: string;
 
-  constructor(name: string, id: string = "", includer: Includer = () => "") {
+  constructor(name: string, includer: Includer = () => "", id: string = "") {
     this.name = name;
     this.id =
       id.replace(/\W/g, "").toLowerCase() ||
@@ -13,7 +13,7 @@ export class Include {
     this.includer = includer;
   }
 
-  tag(input: string = "") {
+  tag(input = "") {
     return this.includer(input);
   }
 
@@ -21,14 +21,14 @@ export class Include {
     if (extname.endsWith(".js")) {
       return new Include(
         "JavaScript",
-        id,
-        (input) => `<script type="module" src="${input}"></script>`
+        (input) => `<script type="module" src="${input}"></script>`,
+        id
       );
     } else if (extname.endsWith(".css")) {
       return new Include(
         "CSS",
-        id,
-        (input) => `<link rel="stylesheet" href="${input}" />`
+        (input) => `<link rel="stylesheet" href="${input}" />`,
+        id
       );
     } else {
       return new Include("Empty");
