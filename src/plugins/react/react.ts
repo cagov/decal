@@ -15,7 +15,7 @@ const bundler: Bundler = (collection) => {
   const inserts = collection.components
     .map((component) => {
       const entryPoint = ReactFormat.entryPoint(component.dirName);
-      return `import { ${component.dirName} } from '../../${component.slug}/${entryPoint}';`;
+      return `import { ${component.dirName} } from '../../${collection.dirName}/${component.dirName}/${entryPoint}';`;
     })
     .join("\n");
 
@@ -54,7 +54,7 @@ export const ReactScaffoldScratch = new Scaffold("React from scratch", {
 
 export const ReactDef = new Component("React Components", {
   formats: [ReactFormat],
-  scaffolds: [ReactScaffoldWC, ReactScaffoldScratch],
+  scaffolds: [ReactScaffoldWC],
 });
 
 export const ReactCollection = new Collection("React Components", ReactDef, {

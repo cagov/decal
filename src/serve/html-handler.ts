@@ -53,12 +53,13 @@ export const createHtmlHandler = (project: Project) => {
     const includers: Promise<void>[] = [];
 
     if (collection) {
-      const componentPathRegex = RegExp(
-        `(.+\/${collection.dirName}\/[^/]+)\/.+$`,
-        "i"
+      const fileStem = path.relative(project.dir, filePath);
+      const componentName = fileStem.split(path.sep)[1];
+      const componentPath = path.join(
+        project.dir,
+        collection.dirName,
+        componentName
       );
-      const componentPath = filePath.match(componentPathRegex)[1];
-      const componentName = path.basename(componentPath);
 
       collection.componentDef.formats.forEach((format) => {
         const include = format.include;
@@ -67,7 +68,7 @@ export const createHtmlHandler = (project: Project) => {
         if (include.id !== "empty") {
           includers.push(
             fs
-              .access(`${componentPath}/${entryPoint}`)
+              .access(path.join(componentPath, entryPoint))
               .then(() => {
                 const queryId = `${include.id}-${entryPoint}`;
                 const queryParam = query[queryId];

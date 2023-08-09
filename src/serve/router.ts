@@ -6,6 +6,7 @@ import { createDigestHandler } from "./digest-handler.js";
 import { Format } from "../format.js";
 import { FileReadError } from "../errors.js";
 import { Project } from "../project.js";
+import path from "path";
 
 export const createRouter = (project: Project) => {
   const { dirs, collections } = project;
@@ -51,7 +52,10 @@ export const createRouter = (project: Project) => {
       // For any component subfolders, like src, just serve the request.
       router.get(`${component.route}/(.*)`, async (ctx, next) => {
         if (!ctx.state.filePath) {
-          ctx.state.filePath = `${dirs.target}${ctx.path}`;
+          ctx.state.filePath = path.join(
+            project.dir,
+            ctx.path.replace(/^\/+/g, "")
+          );
         }
 
         await next();
@@ -62,7 +66,10 @@ export const createRouter = (project: Project) => {
   // Handle all other non-special filePaths here.
   router.get("/(.*)", async (ctx, next) => {
     if (!ctx.state.filePath) {
-      ctx.state.filePath = `${dirs.target}${ctx.path}`;
+      ctx.state.filePath = path.join(
+        project.dir,
+        ctx.path.replace(/^\/+/g, "")
+      );
     }
 
     await next();

@@ -4,6 +4,7 @@ import { promises as fs } from "fs";
 import { Component, ProjectComponent } from "./component.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
+import path from "path";
 
 export type CollectionOptions = {
   includes?: Include[];
@@ -85,11 +86,11 @@ export class ProjectCollection extends Collection {
 
   /** The directory where this collection resides. */
   get dir(): string {
-    return `${this.project.dir}/${this.dirName}`;
+    return path.join(this.project.dir, this.dirName);
   }
 
   get bundleDir(): string {
-    return `${this.project.dir}/bundles/${this.bundleDirName}`;
+    return path.join(this.project.dir, "bundles", this.bundleDirName);
   }
 
   /** The components available to this collection. */
@@ -103,7 +104,7 @@ export class ProjectCollection extends Collection {
       })
       .map((componentDir) => {
         const component = new ProjectComponent(
-          componentDir.replace(`${this.dir}/`, ""),
+          path.basename(componentDir),
           this.componentDef,
           this.project,
           this
@@ -133,7 +134,8 @@ export class ProjectCollection extends Collection {
         await fs.mkdir(this.bundleDir, { recursive: true });
         const entryPoint = format.entryPoint(this.bundleDirName);
         const contents = await format.bundler(this);
-        await fs.writeFile(`${this.bundleDir}/${entryPoint}`, contents);
+        const filePath = path.join(this.bundleDir, entryPoint);
+        await fs.writeFile(filePath, contents);
       }
     });
 
@@ -153,11 +155,12 @@ export class ProjectCollection extends Collection {
           format.formatter(entryPointPath, bundleContents)
         );
 
-        const packDir = `${this.project.dir}/_dist/bundles`;
+        const packDir = path.join(this.project.dir, "_dist", "bundles");
         await fs.mkdir(packDir, { recursive: true });
 
         const bundlePoint = format.bundlePoint(this.bundleDirName, this);
-        await fs.writeFile(`${packDir}/${bundlePoint}`, packContents);
+        const bundleFilePath = path.join(packDir, bundlePoint);
+        await fs.writeFile(bundleFilePath, packContents);
       }
     });
 

@@ -3,6 +3,7 @@ import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
 import { Project } from "./project.js";
 import { ProjectComponent } from "./component.js";
+import chalk from "chalk";
 
 export type ScaffoldNames = {
   plainCase: string;
@@ -121,5 +122,20 @@ export class Scaffold {
     if (newComponentName && scaffold) {
       await scaffold.buildIntoCollection(newComponentName, collection);
     }
+
+    const nameCases = Scaffold.getNameCases(newComponentName);
+    const dirName = scaffold.dirNamer(nameCases);
+
+    console.log(
+      chalk.bgGreen(`\n${newComponentName} created in ${collection.name}.\n`)
+    );
+
+    console.log("To work on this new component, start up serve mode.\n");
+    console.log(`${chalk.bgGray("npm run serve")}\n`);
+
+    console.log("Then start editing the files here.\n");
+    console.log(
+      `${chalk.bgGray(`${project.dir}/${collection.dirName}/${dirName}`)}\n`
+    );
   }
 }

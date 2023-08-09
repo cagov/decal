@@ -27,7 +27,12 @@ export const build = async (config: Config) => {
             })
             .then((contents) => formatter(filePath, contents))
             .then(async (result) => {
-              const outFile = `${project.dir}/_dist/${collection.dirName}/${exitPoint}`;
+              const outFile = path.join(
+                project.dir,
+                "_dist",
+                collection.dirName,
+                exitPoint
+              );
               const outDir = path.dirname(outFile);
 
               await fs.mkdir(outDir, { recursive: true });
@@ -51,8 +56,8 @@ export const build = async (config: Config) => {
   const buildPath = project.dirs.relative(project.dir);
 
   console.log("Entering build mode");
-  console.log(`Sourcing from ${project.dirs.relative(project.dir)}`);
-  console.log(`Building to ${project.dirs.relative(project.dir)}/_dist\n`);
+  console.log(`Sourcing from ${buildPath || "current folder"}`);
+  console.log(`Building to ${path.join(buildPath, "_dist")}\n`);
 
   await Promise.all(builders);
 };

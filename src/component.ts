@@ -3,6 +3,7 @@ import { Format } from "./format.js";
 import { Scaffold } from "./scaffold.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
+import path from "path";
 
 export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
 
@@ -94,19 +95,24 @@ export class ProjectComponent extends Component {
   /** The directory where this component resides. */
   get dir(): string {
     return this.isBundle
-      ? `${this.project.dir}/bundles/${this.dirName}`
+      ? path.join(this.project.dir, "bundles", this.dirName)
       : this.collection
-      ? `${this.collection.dir}/${this.dirName}`
-      : `${this.project.dir}/${this.dirName}`;
+      ? path.join(this.collection.dir, this.dirName)
+      : path.join(this.project.dir, this.dirName);
   }
 
   /** This component's relative folder path within the project. */
   get slug(): string {
     return this.isBundle
-      ? `bundles/${this.dirName}`
+      ? path.join("bundles", this.dirName)
       : this.collection
-      ? `${this.collection.dirName}/${this.dirName}`
+      ? path.join(this.collection.dirName, this.dirName)
       : this.dirName;
+  }
+
+  /** This component's slug with Unix slashes only. Useful on Windows. */
+  get posixSlug(): string {
+    return this.slug.replace("\\", "/");
   }
 
   /** The URL path where this component can be accessed in serve mode. */

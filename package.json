@@ -1,6 +1,6 @@
 {
   "name": "@cagov/decal",
-  "version": "0.0.8",
+  "version": "0.0.16",
   "description": "A lightweight tool for creating, developing, bundling, and sharing your web UI component libraries.",
   "main": "dist/index.js",
   "bin": {
@@ -12,7 +12,8 @@
     "bundle": "npx tsc && node dist/index.js bundle -d throwaway/example-project",
     "new": "npx tsc && node dist/index.js new component -d throwaway/example-project",
     "serve": "npx tsc && node dist/index.js serve -d throwaway/example-project",
-    "newProject": "npx tsc && node dist/index.js new project -d throwaway"
+    "newProject": "npx tsc && node dist/index.js new project -d throwaway",
+    "prepublishOnly": "npx tsc"
   },
   "author": "@cagov",
   "license": "MIT",

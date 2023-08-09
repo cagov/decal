@@ -8,7 +8,7 @@ import { createWatcher } from "./serve/watcher.js";
 import { Project } from "./project.js";
 
 export const serve = (project: Project, port: number) => {
-  const { dirs, collections } = project;
+  const { dirs } = project;
 
   // Initialize a websockets-enabled Koa app.
   const app = websockify(new Koa());
@@ -17,23 +17,13 @@ export const serve = (project: Project, port: number) => {
   const watcher = createWatcher(project);
   app.ws.use(watcher);
 
-  app.use(koaMount("/", serveStatic(dirs.target, { defer: true })));
+  const root = project.dir || "./";
+  app.use(koaMount("/", serveStatic(root, { defer: true })));
 
   // This is where Base CSS expects to find fonts.
   // Can't be helped here, it's hard-coded in the alpha Design System.
   const fontsDir = `${dirs.templates}/fonts`;
   app.use(koaMount("/fonts", serveStatic(fontsDir)));
-
-  collections.forEach((collection) => {
-    collection.components.forEach((component) => {
-      app.use(
-        koaMount(
-          component.route,
-          serveStatic(`${component.dir}/demo`, { defer: true })
-        )
-      );
-    });
-  });
 
   // Create the router for our components.
   const router = createRouter(project);
@@ -49,5 +39,5 @@ export const serve = (project: Project, port: number) => {
   console.log("Entering serve mode");
   console.log(`Serving from ${servePath}\n`);
 
-  console.log(`Dev server started at ${chalk.underline(serveUrl)}`);
+  console.log(`Dev server started at ${chalk.underline(serveUrl)}\n`);
 };

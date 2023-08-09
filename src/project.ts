@@ -11,6 +11,8 @@ type Dirs = {
   current: string;
   /** The targetted directory where this tool should operate, as set by the user. */
   target: string;
+  /** The absolute path of the target directory. */
+  absTarget: string;
   /** The directory of this tool's code. */
   decal: string;
   /** The templates directory. */
@@ -30,12 +32,14 @@ type Dirs = {
 const defaultDecalConfigFile = `
 import DecalWebComponent from "@cagov/decal/dist/plugins/web-component/web-component.js";
 import DecalSass from "@cagov/decal/dist/plugins/sass/sass.js";
-import DecalReact from "@cagov/decal/dist/plugins/react/react.js";
+// import DecalReact from "@cagov/decal/dist/plugins/react/react.js";
+
+// Note: React bundling is still a little busted here. Stay tuned.
 
 export default (decalConfig) => {
   decalConfig.applyCollection(DecalWebComponent.Collection);
   decalConfig.applyCollection(DecalSass.Collection);
-  decalConfig.applyCollection(DecalReact.Collection);
+  // decalConfig.applyCollection(DecalReact.Collection);
 };
 `.trim();
 
@@ -57,21 +61,26 @@ export class Project {
       .fileURLToPath(`${path.dirname(import.meta.url)}/../`)
       .replace(/\/+$/g, "");
     const templates = `${decal}/templates`;
-    const target = path.resolve(dir);
-    const relative = (filePath: string): string =>
-      filePath.replace(`${current}/`, "");
+    const target = dir;
+    const absTarget = path.resolve(dir);
+    const relative = (filePath: string) => path.relative(current, filePath);
 
     return {
       current,
       decal,
       templates,
       target,
+      absTarget,
       relative,
     };
   }
 
   get dir() {
     return this.dirs.target;
+  }
+
+  get absDir() {
+    return this.dirs.absTarget;
   }
 
   static async prompt() {

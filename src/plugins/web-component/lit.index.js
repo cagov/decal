@@ -52,7 +52,7 @@ export class ${names.camelCase} extends LitElement {
 
         <div id="counter-widget">
           <p>This example counter widget is inserted via JavaScript.</p>
-          <p>Check out the code in <em>{{component.slug}}/{{names.kebabCase}}.js</em>.</p>
+          <p>Check out the code in <em>${component.posixSlug}/${names.kebabCase}.js</em>.</p>
           <button type="button" id="counter-button" @click="\${this.increment}">Increment counter</button>
           <p>You've clicked the button <span id="count">\${this.count}</span> times.</p>
         </div>

@@ -7,7 +7,7 @@ export default (component, names) => `<!-- ${names.kebabCase}.demo.html -->
   <h1 slot="heading">${names.plainCase}</h1>
   <div slot="content">
     <p>Welcome to your new California Design System component!</p>
-    <p>Add your sample mark-up into ${component.slug}/${names.kebabCase}.demo.html.</p>
+    <p>Add your sample mark-up into ${component.posixSlug}/${names.kebabCase}.demo.html.</p>
   </div>
 </cagov-${names.kebabCase}>
 

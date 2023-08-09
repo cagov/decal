@@ -8,6 +8,7 @@ import {
 import { Project } from "./project.js";
 import defaultProjectConfig from "./plugins/default-project.js";
 import { Component } from "./component.js";
+import path from "path";
 
 /**
  * *Config* collects each Decal project's configuration files and processes them.
@@ -35,7 +36,7 @@ export class Config {
 
     const confFile = conf.startsWith("/")
       ? conf
-      : `${config.project.dir}/${conf}`;
+      : path.join(config.project.dir, conf);
 
     const filePath = url.pathToFileURL(confFile);
 
