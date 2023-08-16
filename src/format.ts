@@ -1,7 +1,12 @@
 import * as path from "path";
+import { promises as fs } from "fs";
 import mime from "mime-types";
 import { Include } from "./include.js";
 import { ProjectCollection } from "./collection.js";
+import chalk from "chalk";
+import { ProjectComponent } from "./component.js";
+import { FileReadError } from "./errors.js";
+import { Project } from "./project.js";
 
 export type Formatter = (
   filePath: string,
@@ -201,15 +206,13 @@ export class Format {
     }
   }
 
-  /*
-  buildToFile(component: Component, config: Config) {
-    const builders: Promise<void>[] = [];
+  async buildToFile(component: ProjectComponent, project: Project) {
+    const entryPoint = this.entryPoint(component.dirName);
+    const exitPoint = this.exitPoint(component.dirName);
 
-    const filePaths = this.entryPoints.map(
-      (entryPoint) => `${component.dir}/src/${entryPoint}`
-    );
+    if (exitPoint) {
+      const filePath = `${component.dir}/${entryPoint}`;
 
-    filePaths.forEach((filePath) => {
       const promise = fs
         .readFile(filePath, "utf-8")
         .catch((err) => {
@@ -217,20 +220,18 @@ export class Format {
         })
         .then((contents) => this.formatter(filePath, contents))
         .then(async (result) => {
-          const outFilePath = filePath
-            .replace(this.src.extname, this.dist.extname)
-            .replace("/src", "")
-            .replace(config.dirs.target, `${config.dirs.target}/_dist`);
+          const outFile = path.join(
+            project.dir,
+            "_dist",
+            component.slug,
+            exitPoint
+          );
+          const outDir = path.dirname(outFile);
 
-          const outFileDir = path.dirname(outFilePath);
-
-          await fs.mkdir(outFileDir, { recursive: true });
-          return fs.writeFile(outFilePath, result).then(() => {
-            console.log(
-              `${chalk.magenta(this.name)}: ${config.dirs.relative(
-                outFilePath
-              )}`
-            );
+          await fs.mkdir(outDir, { recursive: true });
+          return fs.writeFile(outFile, result).then(() => {
+            const loggablePath = project.dirs.relative(outFile);
+            console.log(`${chalk.magenta(this.name)}: ${loggablePath}`);
           });
         })
         .catch((err) => {
@@ -239,10 +240,7 @@ export class Format {
           }
         });
 
-      builders.push(promise);
-    });
-
-    return builders;
+      return promise;
+    }
   }
-  */
 }

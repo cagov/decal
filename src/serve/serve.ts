@@ -3,9 +3,9 @@ import serveStatic from "koa-static";
 import koaMount from "koa-mount";
 import websockify from "koa-websocket";
 import chalk from "chalk";
-import { createRouter } from "./serve/router.js";
-import { createWatcher } from "./serve/watcher.js";
-import { Project } from "./project.js";
+import { createRouter } from "./router.js";
+import { createWatcher } from "./watcher.js";
+import { Project } from "../project.js";
 
 export const serve = (project: Project, port: number) => {
   const { dirs } = project;
@@ -20,10 +20,8 @@ export const serve = (project: Project, port: number) => {
   const root = project.dir || "./";
   app.use(koaMount("/", serveStatic(root, { defer: true })));
 
-  // This is where Base CSS expects to find fonts.
-  // Can't be helped here, it's hard-coded in the alpha Design System.
-  const fontsDir = `${dirs.templates}/fonts`;
-  app.use(koaMount("/fonts", serveStatic(fontsDir)));
+  const scriptsDir = `${dirs.templates}/scripts`;
+  app.use(koaMount("/_scripts", serveStatic(scriptsDir)));
 
   // Create the router for our components.
   const router = createRouter(project);

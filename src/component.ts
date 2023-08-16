@@ -8,6 +8,7 @@ import path from "path";
 export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
 
 export type ComponentOptions = {
+  name?: string;
   dirName?: string;
   formats?: Format[];
   scaffolds?: Scaffold[];
@@ -46,8 +47,12 @@ export class Component {
    * @param options A *ComponentOptions* object with overrides.
    */
   override(options: ComponentOptions) {
-    const { formats, scaffolds, includes, dirName } = options;
+    const { name, formats, scaffolds, includes, dirName } = options;
 
+    if (name) {
+      this.name = name;
+      this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
+    }
     if (dirName) this.dirName = dirName;
     if (formats) this.formats = formats;
     if (includes) this.includes = includes;

@@ -1,22 +1,89 @@
-import nunjucks, { Template, render } from "nunjucks";
 import * as path from "path";
 import { promises as fs } from "fs";
 import { DefaultContext } from "koa";
-import { getEnvironment } from "../nunjucks.js";
 import { Project } from "../project.js";
 
 type RenderAttributes = {
-  content?: Template;
+  content?: string;
   entryPoints: { name: string; id: string; enabled: boolean }[];
   includeTags: string[];
 };
 
+const entryPointHtml = (attrs: RenderAttributes) => {
+  if (attrs.entryPoints.length > 0) {
+    const entryPoints = attrs.entryPoints
+      .map((entryPoint) => {
+        return /* html */ `
+          <div>
+            <input
+              type="checkbox"
+              id="${entryPoint.id}"
+              name="${entryPoint.id}" 
+              ${entryPoint.enabled ? "checked" : ""} >
+            <label for="${entryPoint.id}">${entryPoint.name}</label>
+          </div>
+        `;
+      })
+      .join("\n");
+
+    return /* html */ `
+      <div>|</div>
+      <div>Enabled sources:</div>
+      <form class="entrypoint-toggler">
+        ${entryPoints}
+        <button type="submit">Reload</button>
+        <input type="hidden" id="reload" name="reload" value="true"/>
+      </form>
+    `;
+  } else {
+    return "";
+  }
+};
+
+const htmlTemplate = (attrs: RenderAttributes) => {
+  return /* html */ `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8"/>
+        <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Component Test</title>
+        <script id="live-reloader" type="module" src="/_scripts/ws.js"></script>
+        <style>
+          nav.digest-nav {
+            padding: 1rem 2rem;
+            background: silver;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+          }
+          form.entrypoint-toggler {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+          }
+          form.entrypoint-toggler button {
+            background: white;
+            padding: 0.25rem 0.5rem;
+            border: gray 0.25rem solid;
+            border-radius: 1rem;
+          }
+        </style>
+        ${attrs.includeTags.join("\n")}
+      </head>
+      <body>
+        <nav class="digest-nav">
+          <a href="/">⬅️ Back to digest</a>
+          ${entryPointHtml(attrs)}
+        </nav>
+        ${attrs.content}
+      </body>
+    </html>
+  `;
+};
+
 export const createHtmlHandler = (project: Project) => {
-  const { dirs, collections } = project;
-
-  const templatesDir = `${dirs.templates}/serve`;
-  const nunjucksEnv = getEnvironment(templatesDir);
-
   return async (ctx: DefaultContext) => {
     const {
       state: { filePath },
@@ -43,32 +110,24 @@ export const createHtmlHandler = (project: Project) => {
       })
       .then((str) => {
         // Prepare the HTML for nunjucks.
-        renderAttributes.content = nunjucks.compile(str);
+        renderAttributes.content = str;
       });
 
-    const collection = collections.find((collection) => {
-      return ctx.path.startsWith(`/${collection.dirName}`);
-    });
+    const component = project.components.find((component) =>
+      ctx.path.startsWith(component.route)
+    );
 
     const includers: Promise<void>[] = [];
 
-    if (collection) {
-      const fileStem = path.relative(project.dir, filePath);
-      const componentName = fileStem.split(path.sep)[1];
-      const componentPath = path.join(
-        project.dir,
-        collection.dirName,
-        componentName
-      );
-
-      collection.componentDef.formats.forEach((format) => {
+    if (component) {
+      component.formats.forEach((format) => {
         const include = format.include;
-        const entryPoint = format.entryPoint(componentName);
+        const entryPoint = format.entryPoint(component.dirName);
 
         if (include.id !== "empty") {
           includers.push(
             fs
-              .access(path.join(componentPath, entryPoint))
+              .access(path.join(component.dir, entryPoint))
               .then(() => {
                 const queryId = `${include.id}-${entryPoint}`;
                 const queryParam = query[queryId];
@@ -94,35 +153,37 @@ export const createHtmlHandler = (project: Project) => {
         }
       });
 
-      collection.includes.forEach((include) => {
-        includers.push(
-          new Promise((resolve) => {
-            const queryParam = query[include.id];
-            const reload = query["reload"] === "true";
-            const enabled = !reload || (reload && queryParam === "on");
+      if (component.collection) {
+        component.collection.includes.forEach((include) => {
+          includers.push(
+            new Promise((resolve) => {
+              const queryParam = query[include.id];
+              const reload = query["reload"] === "true";
+              const enabled = !reload || (reload && queryParam === "on");
 
-            const tag = enabled ? include.tag("") : "";
+              const tag = enabled ? include.tag("") : "";
 
-            renderAttributes.entryPoints.push({
-              name: `${include.name}`,
-              id: include.id,
-              enabled: tag ? true : false,
-            });
+              renderAttributes.entryPoints.push({
+                name: `${include.name}`,
+                id: include.id,
+                enabled: tag ? true : false,
+              });
 
-            if (tag) {
-              renderAttributes.includeTags.push(tag);
-            }
+              if (tag) {
+                renderAttributes.includeTags.push(tag);
+              }
 
-            resolve(void 0);
-          })
-        );
-      });
+              resolve(void 0);
+            })
+          );
+        });
+      }
     }
 
     await Promise.all(includers);
 
     // Render the HTML file into the template.
-    const body = nunjucksEnv.render("plain.njk", renderAttributes);
+    const body = htmlTemplate(renderAttributes);
 
     // Return the result.
     ctx.body = body;

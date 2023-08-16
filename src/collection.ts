@@ -7,6 +7,7 @@ import { Project } from "./project.js";
 import path from "path";
 
 export type CollectionOptions = {
+  name?: string;
   includes?: Include[];
   dirName?: string;
   bundleDirName?: string;
@@ -53,9 +54,10 @@ export class Collection {
    * Override the original collection's parameters with your own.
    * @param options A *CollectionOptions* object with overrides.
    */
-  applyOptions(options: CollectionOptions) {
-    const { includes, bundleDirName, dirName } = options;
+  override(options: CollectionOptions) {
+    const { name, includes, bundleDirName, dirName } = options;
 
+    if (name) this.name = name;
     if (dirName) this.dirName = dirName;
     if (includes) this.includes = includes;
     if (bundleDirName) this.bundleDirName = bundleDirName;

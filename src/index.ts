@@ -4,8 +4,7 @@ import yargs, { Argv, Arguments } from "yargs";
 import { hideBin } from "yargs/helpers";
 
 import { Config } from "./config.js";
-import { serve } from "./serve.js";
-import { build } from "./build.js";
+import { serve } from "./serve/serve.js";
 import { Scaffold } from "./scaffold.js";
 import { Project } from "./project.js";
 
@@ -52,7 +51,7 @@ yargs(hideBin(process.argv))
     (y) => addCommonArgv(y),
     async (argv) => {
       const config = await Config.new(argv.dir, argv.conf);
-      await build(config);
+      await config.project.build();
       process.exit(0);
     }
   )

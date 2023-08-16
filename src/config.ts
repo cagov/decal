@@ -7,7 +7,7 @@ import {
 } from "./collection.js";
 import { Project } from "./project.js";
 import defaultProjectConfig from "./plugins/default-project.js";
-import { Component } from "./component.js";
+import { Component, ComponentOptions, ProjectComponent } from "./component.js";
 import path from "path";
 
 /**
@@ -76,9 +76,52 @@ export class Config {
     collection: Collection,
     options: Partial<CollectionOptions> = {}
   ) {
-    collection.applyOptions(options);
+    collection.override(options);
     const collectionEx = new ProjectCollection(collection, this.project);
     this.project.collections.push(collectionEx);
+  }
+
+  /**
+   * Adds and creates a stand-alone component.
+   * Used by *createComponent* and *applyComponent*.
+   * @param component A *Component* definition.
+   */
+  private addComponentToProject(component: Component) {
+    const componentEx = new ProjectComponent(
+      component.dirName,
+      component,
+      this.project
+    );
+
+    const scaffold = componentEx.scaffolds[0];
+    if (scaffold) {
+      scaffold.create(componentEx, false);
+    }
+
+    this.project.rootComponents.push(componentEx);
+  }
+
+  /**
+   * Create a new stand-alone *Component* and add it to this Decal project.
+   * @param name The name of your new component.
+   * @param options A *ComponentOptions* object to configure your new component.
+   */
+  createComponent(name: string, options: ComponentOptions = {}) {
+    const component = new Component(name, options);
+    this.addComponentToProject(component);
+  }
+
+  /**
+   * Create a stand-alone *Component* from an imported component definition.
+   * @param component The *Component* definition from which you want to create a component.
+   * @param options A partial *ComponentOptions* objects with any of your overrides.
+   */
+  applyComponent(
+    component: Component,
+    options: Partial<ComponentOptions> = {}
+  ) {
+    component.override(options);
+    this.addComponentToProject(component);
   }
 
   /**

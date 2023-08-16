@@ -4,6 +4,7 @@ import * as path from "path";
 import * as url from "url";
 import { promises as fs } from "fs";
 import { ProjectCollection } from "./collection.js";
+import { ProjectComponent } from "./component.js";
 
 /** Contains directory information relevant to a given run of this tool. */
 type Dirs = {
@@ -46,6 +47,8 @@ export default (decalConfig) => {
 export class Project {
   /** Collections are folders that contain components. */
   collections: ProjectCollection[];
+  /** Components are stand-alone component folders. */
+  rootComponents: ProjectComponent[];
 
   /** Dirs contains directory information relevant to this project. */
   dirs: Dirs;
@@ -53,6 +56,7 @@ export class Project {
   constructor(targetDir: string) {
     this.dirs = this.getDirs(targetDir);
     this.collections = [];
+    this.rootComponents = [];
   }
 
   private getDirs(dir: string) {
@@ -81,6 +85,33 @@ export class Project {
 
   get absDir() {
     return this.dirs.absTarget;
+  }
+
+  get components() {
+    const collectionComps = this.collections.flatMap(
+      (collection) => collection.components
+    );
+
+    return [...collectionComps, ...this.rootComponents];
+  }
+
+  async build() {
+    const builders: Promise<void>[] = [];
+
+    this.components.forEach((component) => {
+      component.formats.forEach((format) => {
+        const promise = format.buildToFile(component, this);
+        builders.push(promise);
+      });
+    });
+
+    const buildPath = this.dirs.relative(this.dir);
+
+    console.log("Entering build mode");
+    console.log(`Sourcing from ${buildPath || "current folder"}`);
+    console.log(`Building to ${path.join(buildPath, "_dist")}\n`);
+
+    await Promise.all(builders);
   }
 
   static async prompt() {

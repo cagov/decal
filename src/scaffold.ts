@@ -2,7 +2,7 @@ import { ProjectCollection } from "./collection.js";
 import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
 import { Project } from "./project.js";
-import { ProjectComponent } from "./component.js";
+import { Component, ProjectComponent } from "./component.js";
 import chalk from "chalk";
 
 export type ScaffoldNames = {
@@ -40,7 +40,40 @@ export class Scaffold {
     this.scaffolder = scaffolder;
   }
 
-  async buildIntoCollection(name: string, collection: ProjectCollection) {
+  async create(component: ProjectComponent, prompted: boolean = false) {
+    return fs
+      .access(component.dir)
+      .then(() => {
+        // Component already exists.
+        if (prompted) {
+          console.log(
+            chalk.bgRed(
+              `\n${component.name} at ${component.dir} already exists.\n`
+            )
+          );
+        }
+      })
+      .catch(async () => {
+        // Component doesn't exist, create it.
+        await fs.mkdir(component.dir, { recursive: true });
+        const nameCases = Scaffold.getNameCases(component.name);
+        await Promise.resolve(this.scaffolder(component, nameCases));
+
+        console.log(
+          chalk.bgGreen(`\n${component.name} created in ${component.dir}.\n`)
+        );
+
+        if (prompted) {
+          console.log("To work on this new component, start up serve mode.\n");
+          console.log(chalk.bgGray("npm run serve\n"));
+
+          console.log("Then start editing the files here.\n");
+          console.log(chalk.bgGray(`${component.dir}\n`));
+        }
+      });
+  }
+
+  async createForCollection(name: string, collection: ProjectCollection) {
     const nameCases = Scaffold.getNameCases(name);
     const dirName = this.dirNamer(nameCases);
 
@@ -51,13 +84,9 @@ export class Scaffold {
       collection
     );
 
-    await fs.mkdir(component.dir, { recursive: true });
-
-    const scaffolding = Promise.resolve(
-      this.scaffolder(component, nameCases)
-    ).then(async () => collection.rebundle());
-
-    return scaffolding;
+    return this.create(component, true).then(async () => {
+      await collection.rebundle();
+    });
   }
 
   static getNameCases(componentName: string) {
@@ -120,22 +149,15 @@ export class Scaffold {
     const scaffold = responses.scaffold || collection.componentDef.scaffolds[0];
 
     if (newComponentName && scaffold) {
-      await scaffold.buildIntoCollection(newComponentName, collection);
+      await scaffold.createForCollection(newComponentName, collection);
+    } else {
+      console.log(
+        chalk.bgRed(
+          `\nUnable to create new component, ${newComponentName}.\n`,
+          `Scaffold not found.\n`,
+          `Check your configuration for the ${collection.name} collection.\n`
+        )
+      );
     }
-
-    const nameCases = Scaffold.getNameCases(newComponentName);
-    const dirName = scaffold.dirNamer(nameCases);
-
-    console.log(
-      chalk.bgGreen(`\n${newComponentName} created in ${collection.name}.\n`)
-    );
-
-    console.log("To work on this new component, start up serve mode.\n");
-    console.log(`${chalk.bgGray("npm run serve")}\n`);
-
-    console.log("Then start editing the files here.\n");
-    console.log(
-      `${chalk.bgGray(`${project.dir}/${collection.dirName}/${dirName}`)}\n`
-    );
   }
 }

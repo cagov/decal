@@ -25,10 +25,7 @@ export const createRouter = (project: Project) => {
   /* 
     We'll then perform initial redirects up-front. 
   */
-
-  const indexRoutes = collections.flatMap((collection) =>
-    collection.components.map((component) => component.route)
-  );
+  const indexRoutes = project.components.map((component) => component.route);
 
   // Redirect to corresponding index.html files.
   router.get(["/(.*)/", ...indexRoutes], (ctx) => {
@@ -47,19 +44,17 @@ export const createRouter = (project: Project) => {
   */
 
   // Set up the router to load files from each component.
-  collections.forEach((collection) => {
-    collection.components.forEach((component) => {
-      // For any component subfolders, like src, just serve the request.
-      router.get(`${component.route}/(.*)`, async (ctx, next) => {
-        if (!ctx.state.filePath) {
-          ctx.state.filePath = path.join(
-            project.dir,
-            ctx.path.replace(/^\/+/g, "")
-          );
-        }
+  project.components.forEach((component) => {
+    // For any component subfolders, like src, just serve the request.
+    router.get(`${component.route}/(.*)`, async (ctx, next) => {
+      if (!ctx.state.filePath) {
+        ctx.state.filePath = path.join(
+          project.dir,
+          ctx.path.replace(/^\/+/g, "")
+        );
+      }
 
-        await next();
-      });
+      await next();
     });
   });
 
@@ -80,8 +75,15 @@ export const createRouter = (project: Project) => {
   */
 
   // Set up the router to perform the following actions against all requests.
-  const loaderRoutes = collections
-    .flatMap((collection) => collection.componentDef.formats)
+  const rootFormats = project.rootComponents.flatMap(
+    (component) => component.formats
+  );
+  const collectionFormats = collections.flatMap(
+    (collection) => collection.componentDef.formats
+  );
+  const allFormats = [...rootFormats, ...collectionFormats];
+
+  const loaderRoutes = allFormats
     .map((format) => `/(.*)${format.src.extname}`)
     .sort((a, b) => b.length - a.length);
 
@@ -89,16 +91,20 @@ export const createRouter = (project: Project) => {
     // Defer to next middleware.
     await next();
 
-    // After all asset middlewares are complete below, log the request.
-    console.log(`${chalk.blue("Format")}: ${ctx.state.fileLoader}`);
-    console.log(`${chalk.blue("Request")}: ${ctx.path}`);
-    const logPath = dirs.relative(ctx.state.filePath);
-    if (ctx.status === 404) {
-      console.log(`${chalk.bgRed("Not found")}: ${logPath}\n`);
-    } else if (ctx.status === 500) {
-      console.log(`${chalk.bgRed("Errors")}: ${logPath}\n`);
-    } else {
-      console.log(`${chalk.green("Served")}: ${logPath}\n`);
+    if (!ctx.state.logged) {
+      // After all asset middlewares are complete below, log the request.
+      console.log(`${chalk.blue("Format")}: ${ctx.state.fileLoader}`);
+      console.log(`${chalk.blue("Request")}: ${ctx.path}`);
+      const logPath = dirs.relative(ctx.state.filePath);
+      if (ctx.status === 404) {
+        console.log(`${chalk.bgRed("Not found")}: ${logPath}\n`);
+      } else if (ctx.status === 500) {
+        console.log(`${chalk.bgRed("Errors")}: ${logPath}\n`);
+      } else {
+        console.log(`${chalk.green("Served")}: ${logPath}\n`);
+      }
+
+      ctx.state.logged = true;
     }
   });
 
@@ -143,19 +149,18 @@ export const createRouter = (project: Project) => {
     }
   };
 
-  // Create collection-specific routes for each loader in each collection.
-  collections.forEach((collection) => {
-    collection.componentDef.formats
+  // Create component-specific routes for each format.
+  project.components.forEach((component) => {
+    component.formats
       .sort((a, b) => b.src.extname.length - a.src.extname.length)
       .forEach((format) => {
-        const route = `/${collection.name}/(.*)${format.src.extname}`;
+        const route = `/${component.posixSlug}/(.*)${format.src.extname}`;
         createLoaderRoute(route, format);
       });
   });
 
-  // Create generic, fall-back routes for every loader, across all collections.
-  collections
-    .flatMap((collection) => collection.componentDef.formats)
+  // Create generic, fall-back routes for every format.
+  allFormats
     .sort((a, b) => b.src.extname.length - a.src.extname.length)
     .forEach((format) => {
       const route = `/(.*)${format.src.extname}`;

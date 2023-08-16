@@ -99,7 +99,7 @@ export const LitScaffold = new Scaffold("Lit-Element Web Component", {
   scaffolder: litScaffolder,
 });
 
-export const WCDefinition = new Component("Web Components", {
+export const WCDefinition = new Component("Web Component", {
   formats: [EsbuildFormat],
   scaffolds: [StandardScaffold, LitScaffold],
 });
