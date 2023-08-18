@@ -59,9 +59,9 @@ export class Config {
   createCollection(
     name: string,
     componentDef: Component,
-    options: CollectionOptions = {}
+    options: CollectionOptions
   ) {
-    const collection = new Collection(name, componentDef, options);
+    const collection = new Collection(options);
     const collectionEx = new ProjectCollection(collection, this.project);
     this.project.collections.push(collectionEx);
   }
@@ -76,8 +76,8 @@ export class Config {
     collection: Collection,
     options: Partial<CollectionOptions> = {}
   ) {
-    collection.override(options);
-    const collectionEx = new ProjectCollection(collection, this.project);
+    const newCollection = collection.override(options);
+    const collectionEx = new ProjectCollection(newCollection, this.project);
     this.project.collections.push(collectionEx);
   }
 
@@ -106,8 +106,8 @@ export class Config {
    * @param name The name of your new component.
    * @param options A *ComponentOptions* object to configure your new component.
    */
-  createComponent(name: string, options: ComponentOptions = {}) {
-    const component = new Component(name, options);
+  createComponent(options: ComponentOptions) {
+    const component = new Component(options);
     this.addComponentToProject(component);
   }
 
@@ -120,8 +120,8 @@ export class Config {
     component: Component,
     options: Partial<ComponentOptions> = {}
   ) {
-    component.override(options);
-    this.addComponentToProject(component);
+    const newComponent = component.override(options);
+    this.addComponentToProject(newComponent);
   }
 
   /**

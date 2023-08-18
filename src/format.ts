@@ -6,15 +6,10 @@ import { ProjectCollection } from "./collection.js";
 import chalk from "chalk";
 import { ProjectComponent } from "./component.js";
 import { FileReadError } from "./errors.js";
-import { Project } from "./project.js";
 
 export type Formatter = (
   filePath: string,
   contents: string
-) => string | Promise<string>;
-
-export type Bundler = (
-  collection: ProjectCollection
 ) => string | Promise<string>;
 
 export type FilePointNamer = (componentName: string) => string;
@@ -26,7 +21,7 @@ export type BundlePointNamer = (
 const defaultFormatter: Formatter = (_, contents: string) => contents;
 
 export type FormatOptions = {
-  name?: string;
+  name: string;
   id?: string;
   entryPoint?: string | FilePointNamer;
   exitPoint?: string | FilePointNamer | boolean;
@@ -42,11 +37,8 @@ export type FormatOptions = {
     extname?: string;
     mimeType?: string;
   };
-  bundler?: Bundler;
-  bundlePoint?: string | BundlePointNamer | boolean;
   serveOptions?: any;
   buildOptions?: any;
-  bundleOptions?: any;
 };
 
 export class Format {
@@ -64,17 +56,14 @@ export class Format {
     extname: string;
     mimeType: string;
   };
-  bundler: Bundler;
-  bundlePoint: BundlePointNamer;
   serveOptions: any;
   buildOptions: any;
-  bundleOptions: any;
   canServe: boolean = true;
   canBuild: boolean = true;
-  canBundle: boolean = true;
 
-  constructor(name: string, options: FormatOptions) {
+  constructor(options: FormatOptions) {
     const {
+      name,
       id,
       formatter = defaultFormatter,
       include = true,
@@ -84,11 +73,8 @@ export class Format {
       mimeType,
       src,
       dist,
-      bundler,
-      bundlePoint,
       serveOptions,
       buildOptions,
-      bundleOptions,
     } = options;
 
     if (!name) {
@@ -104,7 +90,6 @@ export class Format {
 
     this.serveOptions = serveOptions || {};
     this.buildOptions = buildOptions || {};
-    this.bundleOptions = bundleOptions || {};
 
     this.src = { extname: "", mimeType: "" };
     this.dist = { extname: "", mimeType: "" };
@@ -186,32 +171,14 @@ export class Format {
     } else {
       this.include = include;
     }
-
-    if (typeof bundlePoint === "function") {
-      this.bundlePoint = bundlePoint;
-    } else if (typeof bundlePoint === "string") {
-      this.bundlePoint = () => bundlePoint;
-    } else if (bundlePoint === false) {
-      this.bundlePoint = () => "";
-      this.canBundle = false;
-    } else {
-      this.bundlePoint = (componentName) => this.exitPoint(componentName);
-    }
-
-    if (bundler) {
-      this.bundler = bundler;
-    } else {
-      this.bundler = () => "";
-      this.canBundle = false;
-    }
   }
 
-  async buildToFile(component: ProjectComponent, project: Project) {
+  async buildToFile(component: ProjectComponent) {
     const entryPoint = this.entryPoint(component.dirName);
     const exitPoint = this.exitPoint(component.dirName);
 
     if (exitPoint) {
-      const filePath = `${component.dir}/${entryPoint}`;
+      const filePath = path.join(component.dir, entryPoint);
 
       const promise = fs
         .readFile(filePath, "utf-8")
@@ -221,7 +188,7 @@ export class Format {
         .then((contents) => this.formatter(filePath, contents))
         .then(async (result) => {
           const outFile = path.join(
-            project.dir,
+            component.project.dir,
             "_dist",
             component.slug,
             exitPoint
@@ -230,7 +197,7 @@ export class Format {
 
           await fs.mkdir(outDir, { recursive: true });
           return fs.writeFile(outFile, result).then(() => {
-            const loggablePath = project.dirs.relative(outFile);
+            const loggablePath = component.project.dirs.relative(outFile);
             console.log(`${chalk.magenta(this.name)}: ${loggablePath}`);
           });
         })
@@ -240,7 +207,7 @@ export class Format {
           }
         });
 
-      return promise;
+      await promise;
     }
   }
 }

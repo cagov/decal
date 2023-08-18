@@ -153,31 +153,32 @@ export const createHtmlHandler = (project: Project) => {
         }
       });
 
-      if (component.collection) {
-        component.collection.includes.forEach((include) => {
-          includers.push(
-            new Promise((resolve) => {
-              const queryParam = query[include.id];
-              const reload = query["reload"] === "true";
-              const enabled = !reload || (reload && queryParam === "on");
+      const collectionIncludes = component?.collection?.includes || [];
+      const otherIncludes = [...component.includes, ...collectionIncludes];
 
-              const tag = enabled ? include.tag("") : "";
+      otherIncludes.forEach((include) => {
+        includers.push(
+          new Promise((resolve) => {
+            const queryParam = query[include.id];
+            const reload = query["reload"] === "true";
+            const enabled = !reload || (reload && queryParam === "on");
 
-              renderAttributes.entryPoints.push({
-                name: `${include.name}`,
-                id: include.id,
-                enabled: tag ? true : false,
-              });
+            const tag = enabled ? include.tag("") : "";
 
-              if (tag) {
-                renderAttributes.includeTags.push(tag);
-              }
+            renderAttributes.entryPoints.push({
+              name: `${include.name}`,
+              id: include.id,
+              enabled: tag ? true : false,
+            });
 
-              resolve(void 0);
-            })
-          );
-        });
-      }
+            if (tag) {
+              renderAttributes.includeTags.push(tag);
+            }
+
+            resolve(void 0);
+          })
+        );
+      });
     }
 
     await Promise.all(includers);

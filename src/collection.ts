@@ -1,16 +1,16 @@
 import glob from "glob";
-import { promises as fs } from "fs";
-
+import path from "path";
 import { Component, ProjectComponent } from "./component.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
-import path from "path";
+import { ScaffoldMode } from "./scaffold.js";
 
 export type CollectionOptions = {
-  name?: string;
-  includes?: Include[];
+  name: string;
   dirName?: string;
-  bundleDirName?: string;
+  component: Component;
+  includes?: Include[];
+  bundles?: Component[];
 };
 
 /**
@@ -22,45 +22,53 @@ export class Collection {
   name: string;
   /** The folder name for this collection within the project. */
   dirName: string;
-  /** The folder name for this collection's bundles. */
-  bundleDirName: string;
   /** The definition for components of this collection. */
-  componentDef: Component;
+  component: Component;
   /** A list of *Include* objects that define how this collection loads in development. */
   includes: Include[];
+  /** A list of components for bundling this collection. */
+  bundles: Component[];
 
   /**
-   * @param name The descriptive name for this collection.
-   * @param componentDef The definition for components of this collection.
    * @param options A *CollectionOptions* object to configure this collection.
    */
-  constructor(
-    name: string,
-    componentDef: Component,
-    options: CollectionOptions = {}
-  ) {
-    const { includes = [], dirName, bundleDirName } = options;
+  constructor(options: CollectionOptions) {
+    const { name, component, dirName, includes = [], bundles = [] } = options;
+
+    if (!name) {
+      throw new Error(`Collection error. No "name" specified.`);
+    }
+
+    if (!component) {
+      throw new Error(`Collection error. No "component" definition specified.`);
+    }
 
     this.name = name;
     this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
 
-    this.componentDef = componentDef;
-
+    this.component = component;
     this.includes = includes;
-    this.bundleDirName = bundleDirName || `all-${this.dirName}`;
+    this.bundles = bundles;
   }
 
   /**
    * Override the original collection's parameters with your own.
    * @param options A *CollectionOptions* object with overrides.
    */
-  override(options: CollectionOptions) {
-    const { name, includes, bundleDirName, dirName } = options;
+  override(options: Partial<CollectionOptions>) {
+    const { name, dirName, component, includes, bundles } = options;
 
-    if (name) this.name = name;
-    if (dirName) this.dirName = dirName;
-    if (includes) this.includes = includes;
-    if (bundleDirName) this.bundleDirName = bundleDirName;
+    const newCollection = new Collection({
+      name: name || this.name,
+      dirName:
+        dirName ||
+        (name ? name.toLowerCase().replaceAll(" ", "-") : this.dirName),
+      component: component || this.component,
+      includes: includes || this.includes,
+      bundles: bundles || this.bundles,
+    });
+
+    return newCollection;
   }
 }
 
@@ -71,28 +79,40 @@ export class Collection {
 export class ProjectCollection extends Collection {
   /** The Decal project to which this collection belongs. */
   project: Project;
+  bundles: ProjectComponent[];
 
   /**
-   * @param name The descriptive name for this collection.
    * @param collection The *Collection* we need to adopt into this project.
    * @param project The overall Decal *Project*.
    */
   constructor(collection: Collection, project: Project) {
-    super(collection.name, collection.componentDef);
+    super({
+      name: collection.name,
+      dirName: collection.dirName,
+      component: collection.component,
+      includes: collection.includes,
+    });
 
     this.project = project;
-    this.dirName = collection.dirName;
-    this.includes = collection.includes;
-    this.bundleDirName = collection.bundleDirName;
+
+    this.bundles = collection.bundles.map((bundle) => {
+      const component = new ProjectComponent(
+        bundle.dirName,
+        bundle,
+        this.project,
+        this,
+        true
+      );
+
+      this.project.bundleComponents.push(component);
+
+      return component;
+    });
   }
 
   /** The directory where this collection resides. */
   get dir(): string {
     return path.join(this.project.dir, this.dirName);
-  }
-
-  get bundleDir(): string {
-    return path.join(this.project.dir, "bundles", this.bundleDirName);
   }
 
   /** The components available to this collection. */
@@ -101,13 +121,12 @@ export class ProjectCollection extends Collection {
       .sync(`${this.dir}/*`)
       .filter((globDir) => {
         const hasNode = globDir.includes("node_modules");
-        const hasBundle = globDir.includes(this.bundleDirName);
-        return !(hasNode || hasBundle);
+        return !hasNode;
       })
       .map((componentDir) => {
         const component = new ProjectComponent(
           path.basename(componentDir),
-          this.componentDef,
+          this.component,
           this.project,
           this
         );
@@ -115,55 +134,18 @@ export class ProjectCollection extends Collection {
       });
   }
 
-  get bundle(): ProjectComponent | undefined {
-    if (this.componentDef.formats.some((format) => format.canBundle)) {
-      const component = new ProjectComponent(
-        this.bundleDirName,
-        this.componentDef,
-        this.project,
-        this,
-        true
-      );
-      return component;
-    } else {
-      return undefined;
-    }
-  }
-
   async rebundle() {
-    const promises = this.componentDef.formats.map(async (format) => {
-      if (format.canBundle) {
-        await fs.mkdir(this.bundleDir, { recursive: true });
-        const entryPoint = format.entryPoint(this.bundleDirName);
-        const contents = await format.bundler(this);
-        const filePath = path.join(this.bundleDir, entryPoint);
-        await fs.writeFile(filePath, contents);
-      }
-    });
+    const promises: Promise<void>[] = [];
 
-    await Promise.all(promises);
-  }
+    this.bundles.forEach((bundle) => {
+      const refreshers = bundle.scaffolds.filter(
+        (scaffold) => scaffold.mode === ScaffoldMode.Refresh
+      );
 
-  async exportBundle() {
-    await this.rebundle();
-
-    const promises = this.componentDef.formats.map(async (format) => {
-      if (format.canBundle) {
-        const entryPoint = format.entryPoint(this.bundleDirName);
-        const entryPointPath = `${this.bundleDir}/${entryPoint}`;
-        const bundleContents = await fs.readFile(entryPointPath, "utf-8");
-
-        const packContents = await Promise.resolve(
-          format.formatter(entryPointPath, bundleContents)
-        );
-
-        const packDir = path.join(this.project.dir, "_dist", "bundles");
-        await fs.mkdir(packDir, { recursive: true });
-
-        const bundlePoint = format.bundlePoint(this.bundleDirName, this);
-        const bundleFilePath = path.join(packDir, bundlePoint);
-        await fs.writeFile(bundleFilePath, packContents);
-      }
+      refreshers.forEach((scaffold) => {
+        const promise = scaffold.refresh(bundle);
+        promises.push(promise);
+      });
     });
 
     await Promise.all(promises);

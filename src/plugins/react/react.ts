@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 
 import { formatter } from "../web-component/web-component.js";
-import { Format, Bundler } from "../../format.js";
+import { Format } from "../../format.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
 import { Collection } from "../../collection.js";
 import { Component } from "../../component.js";
@@ -11,23 +11,12 @@ import indexJsx from "./index.jsx.js";
 import demoJsx from "./demo.jsx.js";
 import demoHtml from "./demo.html.js";
 
-const bundler: Bundler = (collection) => {
-  const inserts = collection.components
-    .map((component) => {
-      const entryPoint = ReactFormat.entryPoint(component.dirName);
-      return `import { ${component.dirName} } from '../../${collection.dirName}/${component.dirName}/${entryPoint}';`;
-    })
-    .join("\n");
-
-  return `import * as React from 'react'\n\n${inserts}`;
-};
-
-export const ReactFormat = new Format("JSX/esbuild", {
+export const ReactFormat = new Format({
+  name: "JSX/esbuild",
   src: { extname: ".jsx" },
   dist: { extname: ".js" },
   formatter: formatter,
   include: false,
-  bundler: bundler,
 });
 
 export const scaffolder: Scaffolder = async (component, names) => {
@@ -42,24 +31,28 @@ export const scaffolder: Scaffolder = async (component, names) => {
   ]);
 };
 
-export const ReactScaffoldWC = new Scaffold("React from Web Component", {
+export const ReactScaffoldWC = new Scaffold({
+  name: "React from Web Component",
   dirNamer: (names) => names.camelCase,
   scaffolder,
 });
 
-export const ReactScaffoldScratch = new Scaffold("React from scratch", {
+export const ReactScaffoldScratch = new Scaffold({
+  name: "React from scratch",
   dirNamer: (names) => names.camelCase,
   scaffolder,
 });
 
-export const ReactDef = new Component("React Components", {
+export const ReactDef = new Component({
+  name: "React Components",
   formats: [ReactFormat],
   scaffolds: [ReactScaffoldWC],
 });
 
-export const ReactCollection = new Collection("React Components", ReactDef, {
+export const ReactCollection = new Collection({
+  name: "React Components",
   dirName: "react",
-  bundleDirName: "AllReact",
+  component: ReactDef,
 });
 
 export default {

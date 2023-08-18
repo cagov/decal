@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import chalk from "chalk";
 import esbuild from "esbuild";
 
-import { Format, Formatter, Bundler } from "../../format.js";
+import { Format, Formatter } from "../../format.js";
 import { Collection } from "../../collection.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
 import { Component } from "../../component.js";
@@ -13,6 +13,7 @@ import litIndex from "./lit.index.js";
 import standardIndex from "./standard.index.js";
 import shadowCss from "./shadow.css.js";
 import shadowHtml from "./shadow.html.js";
+import path from "path";
 
 export const formatter: Formatter = (filePath) =>
   esbuild
@@ -52,19 +53,10 @@ export const formatter: Formatter = (filePath) =>
       return "// There are errors in this file. Check your Decal console.";
     });
 
-const bundler: Bundler = (collection) => {
-  return collection.components
-    .map((component) => {
-      const entryPoint = EsbuildFormat.entryPoint(component.dirName);
-      return `import '../../${collection.dirName}/${component.dirName}/${entryPoint}';`;
-    })
-    .join("\n");
-};
-
-export const EsbuildFormat = new Format("JS/esbuild", {
+export const EsbuildFormat = new Format({
+  name: "JS/esbuild",
   extname: ".js",
   formatter,
-  bundler,
 });
 
 const standardScaffolder: Scaffolder = async (component, names) => {
@@ -80,7 +72,8 @@ const standardScaffolder: Scaffolder = async (component, names) => {
   ]);
 };
 
-export const StandardScaffold = new Scaffold("Standard Web Component", {
+export const StandardScaffold = new Scaffold({
+  name: "Standard Web Component",
   scaffolder: standardScaffolder,
 });
 
@@ -95,18 +88,46 @@ const litScaffolder: Scaffolder = async (component, names) => {
   ]);
 };
 
-export const LitScaffold = new Scaffold("Lit-Element Web Component", {
+export const LitScaffold = new Scaffold({
+  name: "Lit-Element Web Component",
   scaffolder: litScaffolder,
 });
 
-export const WCDefinition = new Component("Web Component", {
+export const BundleScaffolder: Scaffolder = async (bundle) => {
+  const content = bundle.children
+    .map((component) => {
+      const entryPoint = EsbuildFormat.entryPoint(component.dirName);
+      return `import '../../${component.posixSlug}/${entryPoint}';`;
+    })
+    .join("\n");
+
+  const entryPoint = EsbuildFormat.entryPoint(bundle.dirName);
+  await fs.writeFile(path.join(bundle.dir, entryPoint), content);
+};
+
+export const BundleScaffold = new Scaffold({
+  name: "Web Component Bundle Refresher",
+  scaffolder: BundleScaffolder,
+  mode: "refresh",
+});
+
+export const BundleComponent = new Component({
+  name: "Web Component Bundle",
+  formats: [EsbuildFormat],
+  scaffolds: [BundleScaffold],
+});
+
+export const WCDefinition = new Component({
+  name: "Web Component",
   formats: [EsbuildFormat],
   scaffolds: [StandardScaffold, LitScaffold],
 });
 
-export const WCCollection = new Collection("Web Components", WCDefinition, {
+export const WCCollection = new Collection({
+  name: "Web Components",
   dirName: "web-components",
-  bundleDirName: "all-web-components",
+  component: WCDefinition,
+  bundles: [BundleComponent],
 });
 
 export default {

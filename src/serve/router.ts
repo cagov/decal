@@ -79,7 +79,7 @@ export const createRouter = (project: Project) => {
     (component) => component.formats
   );
   const collectionFormats = collections.flatMap(
-    (collection) => collection.componentDef.formats
+    (collection) => collection.component.formats
   );
   const allFormats = [...rootFormats, ...collectionFormats];
 

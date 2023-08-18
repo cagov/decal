@@ -8,7 +8,7 @@ import path from "path";
 export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
 
 export type ComponentOptions = {
-  name?: string;
+  name: string;
   dirName?: string;
   formats?: Format[];
   scaffolds?: Scaffold[];
@@ -31,8 +31,18 @@ export class Component {
   /** A list of *Include* objects that define how this component loads in development. */
   includes: Include[];
 
-  constructor(name: string, options: ComponentOptions = {}) {
-    const { dirName, formats = [], scaffolds = [], includes = [] } = options;
+  constructor(options: ComponentOptions) {
+    const {
+      name,
+      dirName,
+      formats = [],
+      scaffolds = [],
+      includes = [],
+    } = options;
+
+    if (!name) {
+      throw new Error(`Component error. No "name" specified.`);
+    }
 
     this.name = name;
     this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
@@ -46,17 +56,20 @@ export class Component {
    * Override the original component's parameters with your own.
    * @param options A *ComponentOptions* object with overrides.
    */
-  override(options: ComponentOptions) {
+  override(options: Partial<ComponentOptions>) {
     const { name, formats, scaffolds, includes, dirName } = options;
 
-    if (name) {
-      this.name = name;
-      this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
-    }
-    if (dirName) this.dirName = dirName;
-    if (formats) this.formats = formats;
-    if (includes) this.includes = includes;
-    if (scaffolds) this.scaffolds = scaffolds;
+    const newComponent = new Component({
+      name: name || this.name,
+      dirName:
+        dirName ||
+        (name ? name.toLowerCase().replaceAll(" ", "-") : this.dirName),
+      formats: formats || this.formats,
+      includes: includes || this.includes,
+      scaffolds: scaffolds || this.scaffolds,
+    });
+
+    return newComponent;
   }
 }
 
@@ -85,15 +98,16 @@ export class ProjectComponent extends Component {
     collection: ProjectCollection | undefined = undefined,
     isBundle: boolean = false
   ) {
-    super(component.name);
+    super({
+      name: component.name,
+      dirName: dirName,
+      formats: component.formats,
+      includes: component.includes,
+      scaffolds: component.scaffolds,
+    });
 
     this.project = project;
     this.collection = collection;
-
-    this.dirName = dirName;
-    this.includes = component.includes;
-    this.formats = component.formats;
-    this.scaffolds = component.scaffolds;
     this.isBundle = isBundle;
   }
 
@@ -123,5 +137,20 @@ export class ProjectComponent extends Component {
   /** The URL path where this component can be accessed in serve mode. */
   get route(): string {
     return `/${this.slug}`;
+  }
+
+  /** Other components in the same collection as this component. */
+  get siblings(): ProjectComponent[] {
+    if (this.collection) {
+      return this.collection.components.filter(
+        (component) => component.dirName !== this.dirName
+      );
+    } else {
+      return [];
+    }
+  }
+
+  get children(): ProjectComponent[] {
+    return this.isBundle && this.collection ? this.collection.components : [];
   }
 }

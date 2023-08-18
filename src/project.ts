@@ -47,8 +47,10 @@ export default (decalConfig) => {
 export class Project {
   /** Collections are folders that contain components. */
   collections: ProjectCollection[];
-  /** Components are stand-alone component folders. */
+  /** rootComponents are stand-alone component folders. */
   rootComponents: ProjectComponent[];
+  /** bundleComponents are special components that combine collections for export.  */
+  bundleComponents: ProjectComponent[];
 
   /** Dirs contains directory information relevant to this project. */
   dirs: Dirs;
@@ -57,6 +59,7 @@ export class Project {
     this.dirs = this.getDirs(targetDir);
     this.collections = [];
     this.rootComponents = [];
+    this.bundleComponents = [];
   }
 
   private getDirs(dir: string) {
@@ -88,19 +91,29 @@ export class Project {
   }
 
   get components() {
-    const collectionComps = this.collections.flatMap(
+    const collectionComponents = this.collections.flatMap(
       (collection) => collection.components
     );
 
-    return [...collectionComps, ...this.rootComponents];
+    return [
+      ...collectionComponents,
+      ...this.rootComponents,
+      ...this.bundleComponents,
+    ];
   }
 
   async build() {
+    const refreshers = this.collections.map((collection) =>
+      collection.rebundle()
+    );
+
+    await Promise.all(refreshers);
+
     const builders: Promise<void>[] = [];
 
     this.components.forEach((component) => {
       component.formats.forEach((format) => {
-        const promise = format.buildToFile(component, this);
+        const promise = format.buildToFile(component);
         builders.push(promise);
       });
     });

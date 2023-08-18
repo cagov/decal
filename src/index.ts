@@ -56,24 +56,6 @@ yargs(hideBin(process.argv))
     }
   )
   .command(
-    "bundle",
-    "Bundle the project's components for publication.",
-    (y) => addCommonArgv(y),
-    async (argv) => {
-      const config = await Config.new(argv.dir, argv.conf);
-      const bundlings: Promise<void>[] = [];
-
-      config.project.collections.forEach((collection) => {
-        const bundling = collection.exportBundle();
-        bundlings.push(bundling);
-      });
-
-      await Promise.all(bundlings);
-
-      process.exit(0);
-    }
-  )
-  .command(
     "new",
     "Scaffold a new project, component, or configuration.",
     (y) =>

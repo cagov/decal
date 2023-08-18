@@ -3,7 +3,7 @@ import sass from "sass";
 import chalk from "chalk";
 import url from "url";
 
-import { Format, Formatter, Bundler } from "../../format.js";
+import { Format, Formatter } from "../../format.js";
 import { Collection } from "../../collection.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
 import { Component } from "../../component.js";
@@ -11,6 +11,7 @@ import { Component } from "../../component.js";
 // Import scaffold templates.
 import demoHtml from "./demo.html.js";
 import indexScss from "./index.scss.js";
+import path from "path";
 
 const formatter: Formatter = (filePath) =>
   sass
@@ -39,20 +40,11 @@ const formatter: Formatter = (filePath) =>
       return "/* There are errors in this file. Check your Decal console. */";
     });
 
-const bundler: Bundler = (collection) => {
-  return collection.components
-    .map((component) => {
-      const entryPoint = SassFormat.entryPoint(component.dirName);
-      return `@import "../../${collection.dirName}/${component.dirName}/${entryPoint}";`;
-    })
-    .join("\n");
-};
-
-export const SassFormat = new Format("CSS/Sass", {
+export const SassFormat = new Format({
+  name: "CSS/Sass",
   entryPoint: (componentName) => `${componentName}.scss`,
   dist: { extname: ".css" },
   formatter: formatter,
-  bundler: bundler,
 });
 
 const SassScaffolder: Scaffolder = async (component, names) => {
@@ -66,18 +58,46 @@ const SassScaffolder: Scaffolder = async (component, names) => {
   ]);
 };
 
-export const SassScaffold = new Scaffold("Standard Sass", {
+export const SassScaffold = new Scaffold({
+  name: "Standard Sass",
   scaffolder: SassScaffolder,
 });
 
-export const SassDef = new Component("Sass Styles", {
+const SassBundleScaffolder: Scaffolder = async (bundle) => {
+  const content = bundle.children
+    .map((component) => {
+      const entryPoint = SassFormat.entryPoint(component.dirName);
+      return `@import "../../${component.posixSlug}/${entryPoint}";`;
+    })
+    .join("\n");
+
+  const entryPoint = SassFormat.entryPoint(bundle.dirName);
+  await fs.writeFile(path.join(bundle.dir, entryPoint), content);
+};
+
+export const SassBundleScaffold = new Scaffold({
+  name: "Sass Bundle Refresher",
+  scaffolder: SassBundleScaffolder,
+  mode: "refresh",
+});
+
+export const SassBundleComponent = new Component({
+  name: "Sass Bundle",
+  formats: [SassFormat],
+  scaffolds: [SassBundleScaffold],
+});
+
+export const SassDef = new Component({
+  name: "Sass Styles",
   formats: [SassFormat],
   scaffolds: [SassScaffold],
 });
 
-export const SassCollection = new Collection("Sass Styles", SassDef, {
+export const SassCollection = new Collection({
+  name: "Sass Styles",
   dirName: "styles",
-  bundleDirName: "all-styles",
+  component: SassDef,
+  bundles: [SassBundleComponent],
 });
 
 export default {
