@@ -118,35 +118,31 @@ export const createRouter = (project: Project) => {
 
   // Create a route for the given loader.
   const createLoaderRoute = (route: string, format: Format) => {
-    const formatter = format.formatter;
-
-    if (formatter) {
-      router.get(route, async (ctx) => {
-        if (!ctx.state.fileLoader) {
-          await fs
-            .readFile(ctx.state.filePath, "utf-8")
-            .catch((err) => {
-              throw new FileReadError(err.message, err.code, err.path);
-            })
-            .then((contents) => formatter(ctx.state.filePath, contents))
-            .then((result) => {
-              ctx.state.fileLoader = format.name;
-              ctx.body = result;
-              ctx.type = format.dist.mimeType;
-            })
-            .catch((err) => {
-              ctx.state.fileLoader = format.name;
-              if (err.name === "FileReadError") {
-                ctx.body = "Not found";
-                ctx.status = 404;
-              } else {
-                ctx.body = "Errors";
-                ctx.status = 500;
-              }
-            });
-        }
-      });
-    }
+    router.get(route, async (ctx) => {
+      if (!ctx.state.fileLoader) {
+        await fs
+          .readFile(ctx.state.filePath, "utf-8")
+          .catch((err) => {
+            throw new FileReadError(err.message, err.code, err.path);
+          })
+          .then((contents) => format.serve(ctx.state.filePath, contents))
+          .then((result) => {
+            ctx.state.fileLoader = format.name;
+            ctx.body = result;
+            ctx.type = format.dist.mimeType;
+          })
+          .catch((err) => {
+            ctx.state.fileLoader = format.name;
+            if (err.name === "FileReadError") {
+              ctx.body = "Not found";
+              ctx.status = 404;
+            } else {
+              ctx.body = "Errors";
+              ctx.status = 500;
+            }
+          });
+      }
+    });
   };
 
   // Create component-specific routes for each format.

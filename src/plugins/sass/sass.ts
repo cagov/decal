@@ -82,19 +82,18 @@ export const SassBundleScaffold = new Scaffold({
 });
 
 export const SassBundleComponent = new Component({
-  name: "Sass Bundle",
+  dirName: "sass-bundle",
   formats: [SassFormat],
   scaffolds: [SassBundleScaffold],
 });
 
 export const SassDef = new Component({
-  name: "Sass Styles",
+  dirName: "sass",
   formats: [SassFormat],
   scaffolds: [SassScaffold],
 });
 
 export const SassCollection = new Collection({
-  name: "Sass Styles",
   dirName: "styles",
   component: SassDef,
   bundles: [SassBundleComponent],

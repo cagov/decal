@@ -2,12 +2,13 @@ import { ProjectCollection } from "./collection.js";
 import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
 import { Project } from "./project.js";
-import { Component, ProjectComponent } from "./component.js";
+import { ProjectComponent } from "./component.js";
+import { NameCase } from "./name-case.js";
 import chalk from "chalk";
 
 export type Scaffolder = (component: ProjectComponent) => void;
 
-export type ScaffoldDirNamer = (component: Component) => string;
+export type ScaffoldDirNamer = (nameCase: NameCase) => string;
 
 export const ScaffoldMode = {
   New: "new",
@@ -21,7 +22,7 @@ export type ScaffoldOptions = {
   mode?: string;
 };
 
-const defaultDirname: ScaffoldDirNamer = (component) => component.case.param;
+const defaultDirname: ScaffoldDirNamer = (nameCase) => nameCase.param;
 
 export class Scaffold {
   name: string;
@@ -126,9 +127,7 @@ export class Scaffold {
   }
 
   async createForCollection(name: string, collection: ProjectCollection) {
-    const component = collection.component.override({ name });
-
-    const dirName = this.dirNamer(component);
+    const dirName = this.dirNamer(new NameCase(name));
 
     const componentEx = new ProjectComponent(
       dirName,

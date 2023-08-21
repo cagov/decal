@@ -9,7 +9,8 @@ import { FileReadError } from "./errors.js";
 
 export type Formatter = (
   filePath: string,
-  contents: string
+  contents: string,
+  options: any
 ) => string | Promise<string>;
 
 export type FilePointNamer = (componentName: string) => string;
@@ -91,9 +92,9 @@ export class Format {
 
     this.formatter = formatter;
 
-    this.serveOptions = serveOptions || {};
-    this.buildOptions = buildOptions || {};
     this.formatOptions = formatOptions || {};
+    this.serveOptions = serveOptions || this.formatOptions || {};
+    this.buildOptions = buildOptions || this.formatOptions || {};
 
     this.src = { extname: "", mimeType: "" };
     this.dist = { extname: "", mimeType: "" };
@@ -177,6 +178,18 @@ export class Format {
     }
   }
 
+  async runFormatter(filePath: string, contents: string, options: any = {}) {
+    return await Promise.resolve(this.formatter(filePath, contents, options));
+  }
+
+  async build(filePath: string, contents: string) {
+    return this.runFormatter(filePath, contents, this.buildOptions);
+  }
+
+  async serve(filePath: string, contents: string) {
+    return this.runFormatter(filePath, contents, this.serveOptions);
+  }
+
   async buildToFile(component: ProjectComponent) {
     const entryPoint = this.entryPoint(component.dirName);
     const exitPoint = this.exitPoint(component.dirName);
@@ -189,7 +202,7 @@ export class Format {
         .catch((err) => {
           throw new FileReadError(err.message, err.code, err.path);
         })
-        .then((contents) => this.formatter(filePath, contents))
+        .then((contents) => this.build(filePath, contents))
         .then(async (result) => {
           const outFile = path.join(
             component.project.dir,

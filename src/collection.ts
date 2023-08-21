@@ -4,10 +4,10 @@ import { Component, ProjectComponent } from "./component.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
 import { ScaffoldMode } from "./scaffold.js";
+import { NameCase } from "./name-case.js";
 
 export type CollectionOptions = {
-  name: string;
-  dirName?: string;
+  dirName: string;
   component: Component;
   includes?: Include[];
   bundles?: Component[];
@@ -18,8 +18,6 @@ export type CollectionOptions = {
  * Defines how those components should be created, organized, built, and bundled.
  */
 export class Collection {
-  /** The descriptive name for this collection. */
-  name: string;
   /** The folder name for this collection within the project. */
   dirName: string;
   /** The definition for components of this collection. */
@@ -33,19 +31,17 @@ export class Collection {
    * @param options A *CollectionOptions* object to configure this collection.
    */
   constructor(options: CollectionOptions) {
-    const { name, component, dirName, includes = [], bundles = [] } = options;
+    const { component, dirName, includes = [], bundles = [] } = options;
 
-    if (!name) {
-      throw new Error(`Collection error. No "name" specified.`);
+    if (!dirName) {
+      throw new Error(`Collection error. No "dirName" specified.`);
     }
 
     if (!component) {
       throw new Error(`Collection error. No "component" definition specified.`);
     }
 
-    this.name = name;
-    this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
-
+    this.dirName = dirName;
     this.component = component;
     this.includes = includes;
     this.bundles = bundles;
@@ -56,19 +52,29 @@ export class Collection {
    * @param options A *CollectionOptions* object with overrides.
    */
   override(options: Partial<CollectionOptions>) {
-    const { name, dirName, component, includes, bundles } = options;
+    const { dirName, component, includes, bundles } = options;
 
     const newCollection = new Collection({
-      name: name || this.name,
-      dirName:
-        dirName ||
-        (name ? name.toLowerCase().replaceAll(" ", "-") : this.dirName),
+      dirName: dirName || this.dirName,
       component: component || this.component,
       includes: includes || this.includes,
       bundles: bundles || this.bundles,
     });
 
     return newCollection;
+  }
+
+  /**
+   * The component's name in several different cases.
+   * Useful for various scaffolding activities: file naming, variable naming, etc.
+   */
+  get case() {
+    return new NameCase(this.dirName);
+  }
+
+  /** The collection's name in plain language. */
+  get name() {
+    return this.case.sentence;
   }
 }
 
@@ -87,7 +93,6 @@ export class ProjectCollection extends Collection {
    */
   constructor(collection: Collection, project: Project) {
     super({
-      name: collection.name,
       dirName: collection.dirName,
       component: collection.component,
       includes: collection.includes,

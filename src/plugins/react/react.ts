@@ -33,18 +33,17 @@ export const scaffolder: Scaffolder = async (component) => {
 
 export const ReactScaffoldWC = new Scaffold({
   name: "React from Web Component",
-  dirNamer: (component) => component.case.pascal,
+  dirNamer: (nameCase) => nameCase.pascal,
   scaffolder,
 });
 
 export const ReactDef = new Component({
-  name: "React Components",
+  dirName: "react",
   formats: [ReactFormat],
   scaffolds: [ReactScaffoldWC],
 });
 
 export const ReactCollection = new Collection({
-  name: "React Components",
   dirName: "react",
   component: ReactDef,
 });

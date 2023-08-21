@@ -15,24 +15,23 @@ import shadowCss from "./shadow.css.js";
 import shadowHtml from "./shadow.html.js";
 import path from "path";
 
-export const formatter: Formatter = (filePath) =>
-  esbuild
-    .build({
-      entryPoints: [filePath],
-      bundle: true,
-      format: "esm",
-      write: false,
-      logLevel: "silent",
-      loader: {
-        ".css": "text",
-        ".html": "text",
-        //".js": "jsx",
-      },
-      //jsxImportSource: "react",
-      //platform: "neutral",
-      //jsx: "automatic",
-      //jsxSideEffects: true,
-    })
+export const formatter: Formatter = (filePath, _, options) => {
+  const baseOptions = {
+    entryPoints: [filePath],
+    bundle: true,
+    format: "esm",
+    write: false,
+    logLevel: "silent",
+    loader: {
+      ".css": "text",
+      ".html": "text",
+    },
+  };
+
+  const mergedOptions = Object.assign(baseOptions, options);
+
+  return esbuild
+    .build(mergedOptions)
     .then((result) => {
       const body = result.outputFiles[0].text;
       return body;
@@ -52,10 +51,12 @@ export const formatter: Formatter = (filePath) =>
       console.log([...errors, ...warnings].join("\n"));
       return "// There are errors in this file. Check your Decal console.";
     });
+};
 
 export const EsbuildFormat = new Format({
   name: "JS/esbuild",
   extname: ".js",
+  buildOptions: { minify: true },
   formatter,
 });
 
@@ -112,19 +113,18 @@ export const BundleScaffold = new Scaffold({
 });
 
 export const BundleComponent = new Component({
-  name: "Web Component Bundle",
+  dirName: "web-component-bundle",
   formats: [EsbuildFormat],
   scaffolds: [BundleScaffold],
 });
 
 export const WCDefinition = new Component({
-  name: "Web Component",
+  dirName: "web-component",
   formats: [EsbuildFormat],
   scaffolds: [StandardScaffold, LitScaffold],
 });
 
 export const WCCollection = new Collection({
-  name: "Web Components",
   dirName: "web-components",
   component: WCDefinition,
   bundles: [BundleComponent],

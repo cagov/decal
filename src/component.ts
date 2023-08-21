@@ -4,21 +4,16 @@ import { Scaffold } from "./scaffold.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
 import path from "path";
-import * as changeCase from "change-case";
-
-export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
+import { NameCase } from "./name-case.js";
 
 export type ComponentOptions = {
-  name: string;
-  dirName?: string;
+  dirName: string;
   formats?: Format[];
   scaffolds?: Scaffold[];
   includes?: Include[];
 };
 
 export class Component {
-  /** The descriptive name for this component type. */
-  name: string;
   /**
    * The default folder name for this component.
    * This default dirName will only be used when the component is stand-alone.
@@ -33,21 +28,13 @@ export class Component {
   includes: Include[];
 
   constructor(options: ComponentOptions) {
-    const {
-      name,
-      dirName,
-      formats = [],
-      scaffolds = [],
-      includes = [],
-    } = options;
+    const { dirName, formats = [], scaffolds = [], includes = [] } = options;
 
-    if (!name) {
-      throw new Error(`Component error. No "name" specified.`);
+    if (!dirName) {
+      throw new Error(`Component error. No "dirName" specified.`);
     }
 
-    this.name = name;
-    this.dirName = dirName || changeCase.paramCase(name);
-
+    this.dirName = dirName;
     this.includes = includes;
     this.formats = formats;
     this.scaffolds = scaffolds;
@@ -58,11 +45,10 @@ export class Component {
    * @param options A *ComponentOptions* object with overrides.
    */
   override(options: Partial<ComponentOptions>) {
-    const { name, formats, scaffolds, includes, dirName } = options;
+    const { formats, scaffolds, includes, dirName } = options;
 
     const newComponent = new Component({
-      name: name || this.name,
-      dirName: dirName || (name ? changeCase.paramCase(name) : this.dirName),
+      dirName: dirName || this.dirName,
       formats: formats || this.formats,
       includes: includes || this.includes,
       scaffolds: scaffolds || this.scaffolds,
@@ -72,77 +58,16 @@ export class Component {
   }
 
   /**
-   * A collection of the component's name in several different cases.
+   * The component's name in several different cases.
    * Useful for various scaffolding activities: file naming, variable naming, etc.
    */
   get case() {
-    return {
-      /**
-       * The component name with no spaces, and each subsequent word capitalized.
-       * For example: "testStringNumberOne".
-       */
-      camel: changeCase.camelCase(this.dirName),
+    return new NameCase(this.dirName);
+  }
 
-      /**
-       * The component name with every word capitalized, and spaces between words.
-       * For example: "Test String Number One".
-       */
-      capital: changeCase.capitalCase(this.dirName),
-
-      /**
-       * The component name in all uppercase, with underscores between words.
-       * For example: "TEST_STRING_NUMBER_ONE".
-       */
-      constant: changeCase.constantCase(this.dirName),
-
-      /**
-       * The component name in all lowercase, with periods between words.
-       * For example: "test.string.number.one".
-       */
-      dot: changeCase.dotCase(this.dirName),
-
-      /**
-       * The component name with each word capitalized, and dashes between words.
-       * For example: "Test-String-Number-One".
-       */
-      header: changeCase.headerCase(this.dirName),
-
-      /**
-       * The component name in all lowercase, with spaces between words.
-       * For example: "test string number one".
-       */
-      no: changeCase.noCase(this.dirName),
-
-      /**
-       * The component name in all lowercase, with dashes between words.
-       * For example: "test-string-number-one".
-       */
-      param: changeCase.paramCase(this.dirName),
-
-      /**
-       * The component name with every word capitalized, and nothing between words.
-       * For example: "TestStringNumberOne".
-       */
-      pascal: changeCase.pascalCase(this.dirName),
-
-      /**
-       * The component name in all lowercase, with slashes between words.
-       * For example: "test/string/number/one".
-       */
-      path: changeCase.pathCase(this.dirName),
-
-      /**
-       * The component name with spaces between words, the first word capitalized, and other words lowercase.
-       * For example: "Test string number one".
-       */
-      sentence: changeCase.sentenceCase(this.dirName),
-
-      /**
-       * The component name in all lowercase, with underscores between words.
-       * For example: "test_string_number_one".
-       */
-      snake: changeCase.snakeCase(this.dirName),
-    };
+  /** The component's name in plain language. */
+  get name() {
+    return this.case.sentence;
   }
 }
 
@@ -172,7 +97,6 @@ export class ProjectComponent extends Component {
     isBundle: boolean = false
   ) {
     super({
-      name: component.name,
       dirName: dirName,
       formats: component.formats,
       includes: component.includes,
