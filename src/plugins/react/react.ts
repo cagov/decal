@@ -19,27 +19,21 @@ export const ReactFormat = new Format({
   include: false,
 });
 
-export const scaffolder: Scaffolder = async (component, names) => {
-  const filePathBase = `${component.dir}/${names.camelCase}`;
+export const scaffolder: Scaffolder = async (component) => {
+  const filePathBase = `${component.dir}/${component.case.pascal}`;
   const bearFile = `${component.project.dirs.decal}/src/plugins/react/hard-hat-bear.jpg`;
 
   await Promise.all([
     fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
-    fs.writeFile(`${filePathBase}.jsx`, indexJsx(component, names)),
-    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
-    fs.writeFile(`${filePathBase}.demo.jsx`, demoJsx(component, names)),
+    fs.writeFile(`${filePathBase}.jsx`, indexJsx(component)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
+    fs.writeFile(`${filePathBase}.demo.jsx`, demoJsx(component)),
   ]);
 };
 
 export const ReactScaffoldWC = new Scaffold({
   name: "React from Web Component",
-  dirNamer: (names) => names.camelCase,
-  scaffolder,
-});
-
-export const ReactScaffoldScratch = new Scaffold({
-  name: "React from scratch",
-  dirNamer: (names) => names.camelCase,
+  dirNamer: (component) => component.case.pascal,
   scaffolder,
 });
 
@@ -60,7 +54,6 @@ export default {
   Component: ReactDef,
   Format: ReactFormat,
   Scaffolds: {
-    Standard: ReactScaffoldScratch,
     FromWebComponent: ReactScaffoldWC,
   },
 };

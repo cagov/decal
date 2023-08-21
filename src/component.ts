@@ -4,6 +4,7 @@ import { Scaffold } from "./scaffold.js";
 import { Include } from "./include.js";
 import { Project } from "./project.js";
 import path from "path";
+import * as changeCase from "change-case";
 
 export type Bundler = (collection: ProjectCollection) => void | Promise<void>;
 
@@ -45,7 +46,7 @@ export class Component {
     }
 
     this.name = name;
-    this.dirName = dirName || name.toLowerCase().replaceAll(" ", "-");
+    this.dirName = dirName || changeCase.paramCase(name);
 
     this.includes = includes;
     this.formats = formats;
@@ -61,15 +62,87 @@ export class Component {
 
     const newComponent = new Component({
       name: name || this.name,
-      dirName:
-        dirName ||
-        (name ? name.toLowerCase().replaceAll(" ", "-") : this.dirName),
+      dirName: dirName || (name ? changeCase.paramCase(name) : this.dirName),
       formats: formats || this.formats,
       includes: includes || this.includes,
       scaffolds: scaffolds || this.scaffolds,
     });
 
     return newComponent;
+  }
+
+  /**
+   * A collection of the component's name in several different cases.
+   * Useful for various scaffolding activities: file naming, variable naming, etc.
+   */
+  get case() {
+    return {
+      /**
+       * The component name with no spaces, and each subsequent word capitalized.
+       * For example: "testStringNumberOne".
+       */
+      camel: changeCase.camelCase(this.dirName),
+
+      /**
+       * The component name with every word capitalized, and spaces between words.
+       * For example: "Test String Number One".
+       */
+      capital: changeCase.capitalCase(this.dirName),
+
+      /**
+       * The component name in all uppercase, with underscores between words.
+       * For example: "TEST_STRING_NUMBER_ONE".
+       */
+      constant: changeCase.constantCase(this.dirName),
+
+      /**
+       * The component name in all lowercase, with periods between words.
+       * For example: "test.string.number.one".
+       */
+      dot: changeCase.dotCase(this.dirName),
+
+      /**
+       * The component name with each word capitalized, and dashes between words.
+       * For example: "Test-String-Number-One".
+       */
+      header: changeCase.headerCase(this.dirName),
+
+      /**
+       * The component name in all lowercase, with spaces between words.
+       * For example: "test string number one".
+       */
+      no: changeCase.noCase(this.dirName),
+
+      /**
+       * The component name in all lowercase, with dashes between words.
+       * For example: "test-string-number-one".
+       */
+      param: changeCase.paramCase(this.dirName),
+
+      /**
+       * The component name with every word capitalized, and nothing between words.
+       * For example: "TestStringNumberOne".
+       */
+      pascal: changeCase.pascalCase(this.dirName),
+
+      /**
+       * The component name in all lowercase, with slashes between words.
+       * For example: "test/string/number/one".
+       */
+      path: changeCase.pathCase(this.dirName),
+
+      /**
+       * The component name with spaces between words, the first word capitalized, and other words lowercase.
+       * For example: "Test string number one".
+       */
+      sentence: changeCase.sentenceCase(this.dirName),
+
+      /**
+       * The component name in all lowercase, with underscores between words.
+       * For example: "test_string_number_one".
+       */
+      snake: changeCase.snakeCase(this.dirName),
+    };
   }
 }
 
@@ -150,6 +223,7 @@ export class ProjectComponent extends Component {
     }
   }
 
+  /** When this component is a bundle, *children* are components from the assigned collection. */
   get children(): ProjectComponent[] {
     return this.isBundle && this.collection ? this.collection.components : [];
   }

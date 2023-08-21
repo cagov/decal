@@ -59,16 +59,16 @@ export const EsbuildFormat = new Format({
   formatter,
 });
 
-const standardScaffolder: Scaffolder = async (component, names) => {
-  const filePathBase = `${component.dir}/${names.kebabCase}`;
+const standardScaffolder: Scaffolder = async (component) => {
+  const filePathBase = `${component.dir}/${component.case.param}`;
   const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
 
   await Promise.all([
     fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
-    fs.writeFile(`${filePathBase}.js`, standardIndex(component, names)),
-    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
-    fs.writeFile(`${filePathBase}.shadow.html`, shadowHtml(component, names)),
-    fs.writeFile(`${filePathBase}.shadow.css`, shadowCss(component, names)),
+    fs.writeFile(`${filePathBase}.js`, standardIndex(component)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
+    fs.writeFile(`${filePathBase}.shadow.html`, shadowHtml(component)),
+    fs.writeFile(`${filePathBase}.shadow.css`, shadowCss(component)),
   ]);
 };
 
@@ -77,14 +77,14 @@ export const StandardScaffold = new Scaffold({
   scaffolder: standardScaffolder,
 });
 
-const litScaffolder: Scaffolder = async (component, names) => {
-  const filePathBase = `${component.dir}/${names.kebabCase}`;
+const litScaffolder: Scaffolder = async (component) => {
+  const filePathBase = `${component.dir}/${component.case.param}`;
   const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
 
   await Promise.all([
     fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
-    fs.writeFile(`${filePathBase}.js`, litIndex(component, names)),
-    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
+    fs.writeFile(`${filePathBase}.js`, litIndex(component)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
   ]);
 };
 

@@ -1,8 +1,10 @@
-export default (component, names) => ` // ${names.kebabCase}.js
+import { ProjectComponent } from "../../component";
+
+export default (component: ProjectComponent) => ` // ${component.case.param}.js
 
 import { LitElement, css, html } from 'lit-element';
 
-export class ${names.camelCase} extends LitElement {
+export class ${component.case.pascal} extends LitElement {
   static get properties() {
     return {
       count: { type: Number },
@@ -52,7 +54,7 @@ export class ${names.camelCase} extends LitElement {
 
         <div id="counter-widget">
           <p>This example counter widget is inserted via JavaScript.</p>
-          <p>Check out the code in <em>${component.posixSlug}/${names.kebabCase}.js</em>.</p>
+          <p>Check out the code in <em>${component.posixSlug}/${component.case.param}.js</em>.</p>
           <button type="button" id="counter-button" @click="\${this.increment}">Increment counter</button>
           <p>You've clicked the button <span id="count">\${this.count}</span> times.</p>
         </div>
@@ -65,7 +67,7 @@ export class ${names.camelCase} extends LitElement {
   }
 }
 
-window.customElements.define("cagov-${names.kebabCase}", ${names.camelCase});
+window.customElements.define("cagov-${component.case.param}", ${component.case.pascal});
 
-export default ${names.camelCase};
+export default ${component.case.pascal};
 `;

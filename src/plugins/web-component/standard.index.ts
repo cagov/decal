@@ -1,9 +1,11 @@
-export default (component, names) => `// ${names.kebabCase}.js
+import { ProjectComponent } from "../../component";
 
-import shadowStyles from "./${names.kebabCase}.shadow.css";
-import shadowTemplate from "./${names.kebabCase}.shadow.html";
+export default (component: ProjectComponent) => `// ${component.case.param}.js
 
-export class ${names.camelCase} extends window.HTMLElement {
+import shadowStyles from "./${component.case.param}.shadow.css";
+import shadowTemplate from "./${component.case.param}.shadow.html";
+
+export class ${component.case.pascal} extends window.HTMLElement {
   constructor() {
     super();
     this.setUpShadowDOM();
@@ -43,8 +45,8 @@ export class ${names.camelCase} extends window.HTMLElement {
   }
 }
 
-// This declaration lets you use the <cagov-${names.kebabCase}> tag on your pages.
-window.customElements.define("cagov-${names.kebabCase}", ${names.camelCase});
+// This declaration lets you use the <cagov-${component.case.param}> tag on your pages.
+window.customElements.define("cagov-${component.case.param}", ${component.case.pascal});
 
-export default ${names.camelCase};
+export default ${component.case.pascal};
 `;

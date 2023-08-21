@@ -37,6 +37,7 @@ export type FormatOptions = {
     extname?: string;
     mimeType?: string;
   };
+  formatOptions?: any;
   serveOptions?: any;
   buildOptions?: any;
 };
@@ -56,6 +57,7 @@ export class Format {
     extname: string;
     mimeType: string;
   };
+  formatOptions: any;
   serveOptions: any;
   buildOptions: any;
   canServe: boolean = true;
@@ -73,6 +75,7 @@ export class Format {
       mimeType,
       src,
       dist,
+      formatOptions,
       serveOptions,
       buildOptions,
     } = options;
@@ -90,6 +93,7 @@ export class Format {
 
     this.serveOptions = serveOptions || {};
     this.buildOptions = buildOptions || {};
+    this.formatOptions = formatOptions || {};
 
     this.src = { extname: "", mimeType: "" };
     this.dist = { extname: "", mimeType: "" };

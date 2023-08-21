@@ -47,14 +47,14 @@ export const SassFormat = new Format({
   formatter: formatter,
 });
 
-const SassScaffolder: Scaffolder = async (component, names) => {
-  const filePathBase = `${component.dir}/${names.kebabCase}`;
+const SassScaffolder: Scaffolder = async (component) => {
+  const filePathBase = `${component.dir}/${component.case.param}`;
   const bearFile = `${component.project.dirs.decal}/src/plugins/sass/hard-hat-bear.jpg`;
 
   await Promise.all([
     fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
-    fs.writeFile(`${filePathBase}.scss`, indexScss(component, names)),
-    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component, names)),
+    fs.writeFile(`${filePathBase}.scss`, indexScss(component)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
   ]);
 };
 

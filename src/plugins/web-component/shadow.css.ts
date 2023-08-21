@@ -1,4 +1,8 @@
-export default (component, names) => `/* ${names.kebabCase}.shadow.css */
+import { ProjectComponent } from "../../component";
+
+export default (
+  component: ProjectComponent
+) => `/* ${component.case.param}.shadow.css */
 
 #container {
   margin: 2rem;

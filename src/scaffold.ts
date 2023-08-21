@@ -2,22 +2,12 @@ import { ProjectCollection } from "./collection.js";
 import prompts, { PromptObject } from "prompts";
 import { promises as fs } from "fs";
 import { Project } from "./project.js";
-import { ProjectComponent } from "./component.js";
+import { Component, ProjectComponent } from "./component.js";
 import chalk from "chalk";
 
-export type ScaffoldNames = {
-  plainCase: string;
-  camelCase: string;
-  kebabCase: string;
-  snakeCase: string;
-};
+export type Scaffolder = (component: ProjectComponent) => void;
 
-export type Scaffolder = (
-  component: ProjectComponent,
-  names: ScaffoldNames
-) => void;
-
-export type ScaffoldDirNamer = (names: ScaffoldNames) => string;
+export type ScaffoldDirNamer = (component: Component) => string;
 
 export const ScaffoldMode = {
   New: "new",
@@ -31,7 +21,7 @@ export type ScaffoldOptions = {
   mode?: string;
 };
 
-const defaultDirname: ScaffoldDirNamer = (names) => names.kebabCase;
+const defaultDirname: ScaffoldDirNamer = (component) => component.case.param;
 
 export class Scaffold {
   name: string;
@@ -61,15 +51,10 @@ export class Scaffold {
     this.mode = mode;
   }
 
-  async runScaffolder(
-    component: ProjectComponent,
-    names: ScaffoldNames | undefined = undefined
-  ) {
+  async runScaffolder(component: ProjectComponent) {
     await fs.mkdir(component.dir, { recursive: true });
 
-    const nameCases = names || Scaffold.getNameCases(component.name);
-
-    await Promise.resolve(this.scaffolder(component, nameCases)).catch((e) => {
+    await Promise.resolve(this.scaffolder(component)).catch((e) => {
       console.log(
         chalk.bgRed(
           `\nError running scaffold ${this.name} at ${component.slug}.\n`,
@@ -79,11 +64,7 @@ export class Scaffold {
     });
   }
 
-  async create(
-    component: ProjectComponent,
-    prompted: boolean = false,
-    names: ScaffoldNames | undefined = undefined
-  ) {
+  async create(component: ProjectComponent, prompted: boolean = false) {
     if (this.mode === ScaffoldMode.New) {
       return fs
         .access(component.dir)
@@ -99,7 +80,7 @@ export class Scaffold {
         })
         .catch(async () => {
           // Component doesn't exist, create it.
-          await this.runScaffolder(component, names);
+          await this.runScaffolder(component);
 
           console.log(
             chalk.bgGreen(`\n${component.name} created in ${component.dir}.\n`)
@@ -125,12 +106,9 @@ export class Scaffold {
     }
   }
 
-  async refresh(
-    component: ProjectComponent,
-    names: ScaffoldNames | undefined = undefined
-  ) {
+  async refresh(component: ProjectComponent) {
     if (this.mode === ScaffoldMode.Refresh) {
-      await this.runScaffolder(component, names);
+      await this.runScaffolder(component);
 
       console.log(
         chalk.bgGreen(
@@ -148,35 +126,20 @@ export class Scaffold {
   }
 
   async createForCollection(name: string, collection: ProjectCollection) {
-    const nameCases = Scaffold.getNameCases(name);
-    const dirName = this.dirNamer(nameCases);
+    const component = collection.component.override({ name });
 
-    const component = new ProjectComponent(
+    const dirName = this.dirNamer(component);
+
+    const componentEx = new ProjectComponent(
       dirName,
       collection.component,
       collection.project,
       collection
     );
 
-    return this.create(component, true, nameCases).then(async () => {
+    return this.create(componentEx, true).then(async () => {
       await collection.rebundle();
     });
-  }
-
-  static getNameCases(componentName: string) {
-    const kebabCase = componentName.toLowerCase().replaceAll(" ", "-");
-    const snakeCase = componentName.toLowerCase().replaceAll(" ", "_");
-    const camelCase = componentName
-      .split(" ")
-      .map((word: string) => `${word[0].toUpperCase()}${word.substring(1)}`)
-      .join("");
-
-    return {
-      plainCase: componentName,
-      kebabCase,
-      camelCase,
-      snakeCase,
-    };
   }
 
   static async prompt(project: Project) {
@@ -219,8 +182,10 @@ export class Scaffold {
     const responses = await prompts(questions);
 
     const newComponentName = responses.name;
-    const collection = responses.collection || collections[0];
-    const scaffold = responses.scaffold || collection.componentDef.scaffolds[0];
+    const collection: ProjectCollection =
+      responses.collection || collections[0];
+    const scaffold: Scaffold =
+      responses.scaffold || collection.component.scaffolds[0];
 
     if (newComponentName && scaffold) {
       await scaffold.createForCollection(newComponentName, collection);
