@@ -5,6 +5,7 @@ import * as url from "url";
 import { promises as fs } from "fs";
 import { ProjectCollection } from "./collection.js";
 import { ProjectComponent } from "./component.js";
+import { serve } from "./serve/serve.js";
 
 /** Contains directory information relevant to a given run of this tool. */
 type Dirs = {
@@ -247,5 +248,9 @@ export class Project {
 
     console.log("4. Serve your component and start coding!\n");
     console.log(`${chalk.bgGray("npm run serve")}\n`);
+  }
+
+  serve(port: number = 3000) {
+    serve(this, port);
   }
 }

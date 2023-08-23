@@ -1,10 +1,8 @@
 #! /usr/bin/env node
 
-import yargs, { Argv, Arguments } from "yargs";
+import yargs, { Argv } from "yargs";
 import { hideBin } from "yargs/helpers";
-
 import { Config } from "./config.js";
-import { serve } from "./serve/serve.js";
 import { Scaffold } from "./scaffold.js";
 import { Project } from "./project.js";
 
@@ -42,7 +40,7 @@ yargs(hideBin(process.argv))
       }),
     async (argv) => {
       const config = await Config.new(argv.dir, argv.conf);
-      serve(config.project, argv.port);
+      config.project.serve(argv.port);
     }
   )
   .command(

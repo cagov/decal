@@ -31,7 +31,10 @@ export class Config {
    * @param conf The path to your decal.config.js file.
    * @returns A Promise for a complete *Config* object.
    */
-  static async new(dir: string, conf: string): Promise<Config> {
+  static async new(
+    dir: string = "",
+    conf: string = "decal.config.js"
+  ): Promise<Config> {
     const config = new Config(dir);
 
     const confFile = conf.startsWith("/")
