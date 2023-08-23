@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 
-import { formatter } from "../web-component/web-component.js";
+import { EsbuildFormat } from "../web-component/web-component.js";
 import { Format } from "../../format.js";
 import { Scaffold, Scaffolder } from "../../scaffold.js";
 import { Collection } from "../../collection.js";
@@ -10,12 +10,13 @@ import { Component } from "../../component.js";
 import indexJsx from "./index.jsx.js";
 import demoJsx from "./demo.jsx.js";
 import demoHtml from "./demo.html.js";
+import path from "path";
 
 export const ReactFormat = new Format({
   name: "JSX/esbuild",
   src: { extname: ".jsx" },
   dist: { extname: ".js" },
-  formatter: formatter,
+  formatter: EsbuildFormat.formatter,
   include: false,
 });
 
@@ -37,6 +38,30 @@ export const ReactScaffoldWC = new Scaffold({
   scaffolder,
 });
 
+export const BundleScaffolder: Scaffolder = async (bundle) => {
+  const content = bundle.children
+    .map((component) => {
+      const entryPoint = ReactFormat.entryPoint(component.dirName);
+      return `export * from '../../${component.posixSlug}/${entryPoint}';`;
+    })
+    .join("\n");
+
+  const entryPoint = ReactFormat.entryPoint(bundle.dirName);
+  await fs.writeFile(path.join(bundle.dir, entryPoint), content);
+};
+
+export const BundleScaffold = new Scaffold({
+  name: "React Bundle Refresher",
+  scaffolder: BundleScaffolder,
+  mode: "refresh",
+});
+
+export const BundleComponent = new Component({
+  dirName: "react-bundle",
+  formats: [ReactFormat],
+  scaffolds: [BundleScaffold],
+});
+
 export const ReactDef = new Component({
   dirName: "react",
   formats: [ReactFormat],
@@ -46,6 +71,7 @@ export const ReactDef = new Component({
 export const ReactCollection = new Collection({
   dirName: "react",
   component: ReactDef,
+  bundles: [BundleComponent],
 });
 
 export default {
