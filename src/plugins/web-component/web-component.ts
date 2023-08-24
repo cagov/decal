@@ -65,9 +65,10 @@ const standardScaffolder: Scaffolder = async (component) => {
   const filePathBase = `${component.dir}/${component.case.param}`;
   const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
 
-  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
+  const assetsPath = path.join(component.project.dir, "assets");
+  await fs.mkdir(assetsPath, { recursive: true });
   await Promise.all([
-    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
+    fs.copyFile(bearFile, path.join(assetsPath, "hard-hat-bear.jpg")),
     fs.writeFile(`${filePathBase}.js`, standardIndex(component)),
     fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
     fs.writeFile(`${filePathBase}.shadow.html`, shadowHtml(component)),
@@ -84,9 +85,10 @@ const litScaffolder: Scaffolder = async (component) => {
   const filePathBase = `${component.dir}/${component.case.param}`;
   const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
 
-  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
+  const assetsPath = path.join(component.project.dir, "assets");
+  await fs.mkdir(assetsPath, { recursive: true });
   await Promise.all([
-    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
+    fs.copyFile(bearFile, path.join(assetsPath, "hard-hat-bear.jpg")),
     fs.writeFile(`${filePathBase}.js`, litIndex(component)),
     fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
   ]);
