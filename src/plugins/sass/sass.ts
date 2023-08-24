@@ -49,10 +49,11 @@ export const SassFormat = new Format({
 
 const SassScaffolder: Scaffolder = async (component) => {
   const filePathBase = `${component.dir}/${component.case.param}`;
-  const bearFile = `${component.project.dirs.decal}/src/plugins/sass/hard-hat-bear.jpg`;
+  const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
 
+  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
   await Promise.all([
-    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
     fs.writeFile(`${filePathBase}.scss`, indexScss(component)),
     fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
   ]);
@@ -94,7 +95,7 @@ export const SassDef = new Component({
 });
 
 export const SassCollection = new Collection({
-  dirName: "styles",
+  dirName: "sass",
   component: SassDef,
   bundles: [SassBundleComponent],
 });

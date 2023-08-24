@@ -7,7 +7,7 @@ export default (
 <!-- Your <cagov-${component.case.param}> component starts here. -->
 
 <cagov-${component.case.param}>
-  <img slot="the-bear" src="hard-hat-bear.jpg" alt="California bear wearing a hard hat" width="300"/>
+  <img slot="the-bear" src="/assets/hard-hat-bear.jpg" alt="California bear wearing a hard hat" width="300"/>
   <h1 slot="heading">${component.case.sentence}</h1>
   <div slot="content">
     <p>Welcome to your new California Design System component!</p>

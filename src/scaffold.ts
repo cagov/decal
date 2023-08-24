@@ -111,11 +111,13 @@ export class Scaffold {
     if (this.mode === ScaffoldMode.Refresh) {
       await this.runScaffolder(component);
 
+      /*
       console.log(
         chalk.bgGreen(
           `\n${component.slug} refreshed by scaffold ${this.name}.\n`
         )
       );
+      */
     } else {
       console.log(
         chalk.bgYellow(

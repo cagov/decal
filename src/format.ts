@@ -6,6 +6,7 @@ import { ProjectCollection } from "./collection.js";
 import chalk from "chalk";
 import { ProjectComponent } from "./component.js";
 import { FileReadError } from "./errors.js";
+import { NameCase } from "./name-case.js";
 
 export type Formatter = (
   filePath: string,
@@ -86,9 +87,7 @@ export class Format {
     }
 
     this.name = name;
-    this.id = id
-      ? id.replace(/\W/g, "").toLowerCase()
-      : name.replace(/\W/g, "").toLowerCase();
+    this.id = id ? new NameCase(id).snake : new NameCase(name).snake;
 
     this.formatter = formatter;
 
@@ -172,7 +171,7 @@ export class Format {
     if (include === true) {
       this.include = Include.default(this.dist.extname, this.id);
     } else if (include === false || include === undefined) {
-      this.include = new Include("Empty");
+      this.include = new Include({ name: "Empty" });
     } else {
       this.include = include;
     }

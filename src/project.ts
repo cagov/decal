@@ -34,14 +34,14 @@ type Dirs = {
 const defaultDecalConfigFile = `
 import DecalWebComponent from "@cagov/decal/dist/plugins/web-component/web-component.js";
 import DecalSass from "@cagov/decal/dist/plugins/sass/sass.js";
-// import DecalReact from "@cagov/decal/dist/plugins/react/react.js";
-
-// Note: React bundling is still a little busted here. Stay tuned.
+import DecalReact from "@cagov/decal/dist/plugins/react/react.js";
+import DecalCSS from "@cagov/decal/dist/plugins/css/css.js";
 
 export default (decalConfig) => {
   decalConfig.applyCollection(DecalWebComponent.Collection);
   decalConfig.applyCollection(DecalSass.Collection);
-  // decalConfig.applyCollection(DecalReact.Collection);
+  decalConfig.applyCollection(DecalReact.Collection);
+  decalConfig.applyCollection(DecalCSS.Collection);
 };
 `.trim();
 
@@ -203,7 +203,6 @@ export class Project {
           build: "decal build",
           serve: "decal serve",
           new: "decal new component",
-          bundle: "decal bundle",
         },
         dependencies: {
           "@cagov/decal": `^${decalPackage.version}`,

@@ -2,10 +2,13 @@ import * as path from "path";
 import { promises as fs } from "fs";
 import { DefaultContext } from "koa";
 import { Project } from "../project.js";
+import { IncludeMode } from "../include.js";
+import { render } from "nunjucks";
 
 type RenderAttributes = {
   content?: string;
   entryPoints: { name: string; id: string; enabled: boolean }[];
+  scenarios: { name: string; id: string; enabled: boolean }[];
   includeTags: string[];
 };
 
@@ -26,11 +29,40 @@ const entryPointHtml = (attrs: RenderAttributes) => {
       })
       .join("\n");
 
+    const scenarios = () => {
+      const optTags = attrs.scenarios.map((scenario) => {
+        return /* html */ `
+          <option
+            value="${scenario.id}" 
+            ${scenario.enabled ? "selected" : ""}
+          >
+            ${scenario.name}
+          </option>
+        `;
+      });
+
+      if (optTags.length > 0) {
+        return /* html */ `
+          <fieldset>
+            <legend>Scenario:</legend>
+            <select name="scenario">
+              <option value="plain" selected>Plain</option>
+              ${optTags.join("\n")}
+            </select>
+          </fieldset>
+        `;
+      } else {
+        return "";
+      }
+    };
+
     return /* html */ `
-      <div>|</div>
-      <div>Enabled sources:</div>
       <form class="entrypoint-toggler">
-        ${entryPoints}
+        ${scenarios()}
+        <fieldset>
+          <legend>Sources:</legend>
+          ${entryPoints}
+        </fieldset>
         <button type="submit">Reload</button>
         <input type="hidden" id="reload" name="reload" value="true"/>
       </form>
@@ -55,17 +87,24 @@ const htmlTemplate = (attrs: RenderAttributes) => {
             padding: 1rem 2rem;
             background: silver;
             display: flex;
-            gap: 1rem;
-            align-items: center;
+            gap: 3rem;
+            align-items: start;
           }
           form.entrypoint-toggler {
             display: flex;
-            gap: 1rem;
-            align-items: center;
+            gap: 3rem;
+            align-items: start;
+          }
+          form.entrypoint-toggler select {
+            all: revert;
+            margin: .25rem 0;
+            font-size: 1rem;
+            padding: 0.5rem;
           }
           form.entrypoint-toggler button {
             background: white;
-            padding: 0.25rem 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 1.25rem;
             border: gray 0.25rem solid;
             border-radius: 1rem;
           }
@@ -98,6 +137,7 @@ export const createHtmlHandler = (project: Project) => {
     const renderAttributes: RenderAttributes = {
       includeTags: [],
       entryPoints: [],
+      scenarios: [],
     };
 
     // Load the given HTML file.
@@ -109,7 +149,6 @@ export const createHtmlHandler = (project: Project) => {
         return `<p>File not found: ${filePath}</p>`;
       })
       .then((str) => {
-        // Prepare the HTML for nunjucks.
         renderAttributes.content = str;
       });
 
@@ -155,8 +194,11 @@ export const createHtmlHandler = (project: Project) => {
 
       const collectionIncludes = component?.collection?.includes || [];
       const otherIncludes = [...component.includes, ...collectionIncludes];
+      const sourceIncludes = otherIncludes.filter(
+        (include) => include.mode === IncludeMode.Source
+      );
 
-      otherIncludes.forEach((include) => {
+      sourceIncludes.forEach((include) => {
         includers.push(
           new Promise((resolve) => {
             const queryParam = query[include.id];
@@ -173,6 +215,39 @@ export const createHtmlHandler = (project: Project) => {
 
             if (tag) {
               renderAttributes.includeTags.push(tag);
+            }
+
+            resolve(void 0);
+          })
+        );
+      });
+
+      const scenarioIncludes = otherIncludes.filter(
+        (include) => include.mode === IncludeMode.Scenario
+      );
+
+      scenarioIncludes.forEach((include) => {
+        includers.push(
+          new Promise((resolve) => {
+            const queryParam = query["scenario"];
+            const enabled = queryParam === include.id;
+
+            const tag = enabled ? include.tag("") : "";
+
+            renderAttributes.scenarios.push({
+              name: `${include.name}`,
+              id: include.id,
+              enabled,
+            });
+
+            if (tag) {
+              renderAttributes.includeTags.push(tag);
+            }
+
+            if (enabled) {
+              renderAttributes.content = include.templater(
+                renderAttributes.content || ""
+              );
             }
 
             resolve(void 0);

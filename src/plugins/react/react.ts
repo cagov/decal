@@ -7,8 +7,10 @@ import { Collection } from "../../collection.js";
 import { Component } from "../../component.js";
 
 // Import scaffold templates.
-import indexJsx from "./index.jsx.js";
-import demoJsx from "./demo.jsx.js";
+import wcIndex from "./wc.index.jsx.js";
+import wcDemo from "./wc.demo.jsx.js";
+import scratchDemo from "./scratch.demo.jsx.js";
+import scratchIndex from "./scratch.index.jsx.js";
 import demoHtml from "./demo.html.js";
 import path from "path";
 
@@ -20,22 +22,46 @@ export const ReactFormat = new Format({
   include: false,
 });
 
-export const scaffolder: Scaffolder = async (component) => {
+export const wcScaffolder: Scaffolder = async (component) => {
   const filePathBase = `${component.dir}/${component.case.pascal}`;
-  const bearFile = `${component.project.dirs.decal}/src/plugins/react/hard-hat-bear.jpg`;
+  const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
 
+  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
   await Promise.all([
-    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
-    fs.writeFile(`${filePathBase}.jsx`, indexJsx(component)),
+    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
+    fs.writeFile(`${filePathBase}.jsx`, wcIndex(component)),
     fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
-    fs.writeFile(`${filePathBase}.demo.jsx`, demoJsx(component)),
+    fs.writeFile(`${filePathBase}.demo.jsx`, wcDemo(component)),
   ]);
+
+  console.log(
+    "\nNote: you will likely need to add mark-up from the original web component source into this React version."
+  );
 };
 
 export const ReactScaffoldWC = new Scaffold({
   name: "React from Web Component",
   dirNamer: (nameCase) => nameCase.pascal,
-  scaffolder,
+  scaffolder: wcScaffolder,
+});
+
+export const scratchScaffolder: Scaffolder = async (component) => {
+  const filePathBase = `${component.dir}/${component.case.pascal}`;
+  const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
+
+  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
+  await Promise.all([
+    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
+    fs.writeFile(`${filePathBase}.jsx`, scratchIndex(component)),
+    fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
+    fs.writeFile(`${filePathBase}.demo.jsx`, scratchDemo(component)),
+  ]);
+};
+
+export const ReactScaffoldScratch = new Scaffold({
+  name: "React from Scratch",
+  dirNamer: (nameCase) => nameCase.pascal,
+  scaffolder: scratchScaffolder,
 });
 
 export const BundleScaffolder: Scaffolder = async (bundle) => {
@@ -65,7 +91,7 @@ export const BundleComponent = new Component({
 export const ReactDef = new Component({
   dirName: "react",
   formats: [ReactFormat],
-  scaffolds: [ReactScaffoldWC],
+  scaffolds: [ReactScaffoldWC, ReactScaffoldScratch],
 });
 
 export const ReactCollection = new Collection({

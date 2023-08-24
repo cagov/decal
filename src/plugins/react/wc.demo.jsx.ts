@@ -12,5 +12,10 @@ window.React = React;
 
 const domNode = document.querySelector('main');
 const root = createRoot(domNode);
-root.render(<${component.case.pascal}></${component.case.pascal}>);
+
+const DemoComponent = () => {
+  return <${component.case.pascal}></${component.case.pascal}>
+}
+
+root.render(<DemoComponent/>);
 `;

@@ -55,6 +55,7 @@ export const formatter: Formatter = (filePath, _, options) => {
 
 export const EsbuildFormat = new Format({
   name: "JS/esbuild",
+  id: "js",
   extname: ".js",
   buildOptions: { minify: true },
   formatter,
@@ -62,10 +63,11 @@ export const EsbuildFormat = new Format({
 
 const standardScaffolder: Scaffolder = async (component) => {
   const filePathBase = `${component.dir}/${component.case.param}`;
-  const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
+  const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
 
+  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
   await Promise.all([
-    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
     fs.writeFile(`${filePathBase}.js`, standardIndex(component)),
     fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
     fs.writeFile(`${filePathBase}.shadow.html`, shadowHtml(component)),
@@ -80,10 +82,11 @@ export const StandardScaffold = new Scaffold({
 
 const litScaffolder: Scaffolder = async (component) => {
   const filePathBase = `${component.dir}/${component.case.param}`;
-  const bearFile = `${component.project.dirs.decal}/src/plugins/web-component/hard-hat-bear.jpg`;
+  const bearFile = `${component.project.dirs.templates}/img/hard-hat-bear.jpg`;
 
+  await fs.mkdir(`${component.project.dir}/assets`, { recursive: true });
   await Promise.all([
-    fs.copyFile(bearFile, `${component.dir}/hard-hat-bear.jpg`),
+    fs.copyFile(bearFile, `${component.project.dir}/assets/hard-hat-bear.jpg`),
     fs.writeFile(`${filePathBase}.js`, litIndex(component)),
     fs.writeFile(`${filePathBase}.demo.html`, demoHtml(component)),
   ]);
@@ -97,12 +100,12 @@ export const LitScaffold = new Scaffold({
 export const BundleScaffolder: Scaffolder = async (bundle) => {
   const content = bundle.children
     .map((component) => {
-      const entryPoint = EsbuildFormat.entryPoint(component.dirName);
+      const entryPoint = component.entryPoints.get("js");
       return `import '../../${component.posixSlug}/${entryPoint}';`;
     })
     .join("\n");
 
-  const entryPoint = EsbuildFormat.entryPoint(bundle.dirName);
+  const entryPoint = `${bundle.entryPoints.get("js")}`;
   await fs.writeFile(path.join(bundle.dir, entryPoint), content);
 };
 

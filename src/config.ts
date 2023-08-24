@@ -59,11 +59,7 @@ export class Config {
    * @param componentDef A *Component* object that defines components for this collection.
    * @param options A *CollectionOptions* object to configure your new collection.
    */
-  createCollection(
-    name: string,
-    componentDef: Component,
-    options: CollectionOptions
-  ) {
+  createCollection(options: CollectionOptions) {
     const collection = new Collection(options);
     const collectionEx = new ProjectCollection(collection, this.project);
     this.project.collections.push(collectionEx);

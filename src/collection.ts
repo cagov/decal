@@ -13,10 +13,6 @@ export type CollectionOptions = {
   bundles?: Component[];
 };
 
-/**
- * Represents a group of components.
- * Defines how those components should be created, organized, built, and bundled.
- */
 export class Collection {
   /** The folder name for this collection within the project. */
   dirName: string;
@@ -28,6 +24,8 @@ export class Collection {
   bundles: Component[];
 
   /**
+   * Represents a group of components.
+   * Defines how those components should be created, organized, built, and bundled.
    * @param options A *CollectionOptions* object to configure this collection.
    */
   constructor(options: CollectionOptions) {
@@ -78,16 +76,15 @@ export class Collection {
   }
 }
 
-/**
- * *ProjectCollection* is a *Collection* that's "hydrated" by a Decal project.
- * It includes additional methods, including access to the overall *Project* definiton.
- */
 export class ProjectCollection extends Collection {
   /** The Decal project to which this collection belongs. */
   project: Project;
+  /** The special bundle components used to bundle this collection for export. */
   bundles: ProjectComponent[];
 
   /**
+   * *ProjectCollection* is a *Collection* that's "hydrated" by a Decal project.
+   * It includes additional methods, including access to the overall *Project* definiton.
    * @param collection The *Collection* we need to adopt into this project.
    * @param project The overall Decal *Project*.
    */
@@ -139,6 +136,7 @@ export class ProjectCollection extends Collection {
       });
   }
 
+  /** Refreshes any bundle files attached to this collection. */
   async rebundle() {
     const promises: Promise<void>[] = [];
 

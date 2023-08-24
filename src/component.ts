@@ -1,7 +1,7 @@
 import { ProjectCollection } from "./collection.js";
 import { Format } from "./format.js";
 import { Scaffold } from "./scaffold.js";
-import { Include } from "./include.js";
+import { Include, IncludeMode } from "./include.js";
 import { Project } from "./project.js";
 import path from "path";
 import { NameCase } from "./name-case.js";
@@ -150,5 +150,23 @@ export class ProjectComponent extends Component {
   /** When this component is a bundle, *children* are components from the assigned collection. */
   get children(): ProjectComponent[] {
     return this.isBundle && this.collection ? this.collection.components : [];
+  }
+
+  /** A map of entryPoints for this component, as defined by the component's formats. */
+  get entryPoints(): Map<string, string> {
+    const map = new Map<string, string>();
+    this.formats.forEach((format) => {
+      map.set(format.id, format.entryPoint(this.dirName));
+    });
+    return map;
+  }
+
+  /** A map of exitPoints for this component, as defined by the component's formats. */
+  get exitPoints(): Map<string, string> {
+    const map = new Map<string, string>();
+    this.formats.forEach((format) => {
+      map.set(format.id, format.exitPoint(this.dirName));
+    });
+    return map;
   }
 }
