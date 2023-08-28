@@ -1,12 +1,13 @@
 import * as changeCase from "change-case";
 
-/**
- * A utility class for transforming strings into different cases.
- * Useful for various scaffolding activities: file naming, variable naming, etc.
- */
 export class NameCase {
   input: string;
 
+  /**
+   * A utility class for transforming strings into different cases.
+   * Useful for various scaffolding activities: file naming, variable naming, etc.
+   * @param input An input string.
+   */
   constructor(input: string) {
     this.input = input;
   }
