@@ -20,6 +20,7 @@ Decal then offers powerful conveniences.
 - Mix, match, play, and build in different front-end frameworks (React, Vue, etc.) all at once.
 - Create new components with a single command.
 - Build and bundle your components without fuss or fear.
+- Export your file structure and build processes to other teams.
 
 ## Getting started
 
